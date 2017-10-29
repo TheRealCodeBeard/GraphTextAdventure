@@ -1,0 +1,215 @@
+[{
+  "id": "35079b35-0c95-4f0e-b81a-05ec98eb9f51",
+  "label": "room",
+  "type": "vertex",
+  "inE": {
+    "south": [
+      {
+        "id": "75ced19a-6d58-46c2-9f53-41a31198a9ed",
+        "outV": "93acfacb-a65e-46be-a1d9-dcf248a3630f"
+      }
+    ],
+    "west": [
+      {
+        "id": "238c0a98-9bd2-47e1-8881-6e100ca085d9",
+        "outV": "80ef0187-2fb6-4e2d-a66e-7e7faec14618"
+      }
+    ]
+  },
+  "outE": {
+    "north": [
+      {
+        "id": "c0de4319-4dd7-4b8b-bedf-3e43c4485531",
+        "inV": "93acfacb-a65e-46be-a1d9-dcf248a3630f"
+      }
+    ],
+    "east": [
+      {
+        "id": "b59d56e5-2721-45d3-8f9c-966632584092",
+        "inV": "80ef0187-2fb6-4e2d-a66e-7e7faec14618"
+      }
+    ]
+  },
+  "properties": {
+    "made": [
+      {
+        "id": "d86eadd4-2823-4a9f-a1c0-8b84fc22d731",
+        "value": "node app"
+      }
+    ],
+    "description": [
+      {
+        "id": "0e13bea7-7696-49b3-bfdd-9f5acf086929",
+        "value": "A brightly lit room. All the walls, the floor and the ceiling are white."
+      }
+    ]
+  }
+},{
+  "id": "8bf55d9c-ff0e-4fd6-9846-817dcb483392",
+  "label": "player",
+  "type": "vertex",
+  "outE": {
+    "in": [
+      {
+        "id": "b1aa3d93-05d9-4241-b84d-8727586cf312",
+        "inV": "deb7c8f9-fb29-4411-acdc-f50528396073"
+      }
+    ]
+  },
+  "properties": {
+    "": [
+      {
+        "id": "496734c7-a6df-492b-9c56-6f9fb2620e45",
+        "value": ""
+      }
+    ]
+  }
+},{
+  "id": "93acfacb-a65e-46be-a1d9-dcf248a3630f",
+  "label": "room",
+  "type": "vertex",
+  "inE": {
+    "north": [
+      {
+        "id": "c0de4319-4dd7-4b8b-bedf-3e43c4485531",
+        "outV": "35079b35-0c95-4f0e-b81a-05ec98eb9f51"
+      }
+    ]
+  },
+  "outE": {
+    "south": [
+      {
+        "id": "75ced19a-6d58-46c2-9f53-41a31198a9ed",
+        "inV": "35079b35-0c95-4f0e-b81a-05ec98eb9f51"
+      }
+    ]
+  },
+  "properties": {
+    "description": [
+      {
+        "id": "7ca111f6-a216-47e6-8a0c-2c8d5272c210",
+        "value": "This room looks like it has been lived in for many years by an old cat.\nThe cat was apparently very angry.\nThe room smells funny."
+      }
+    ]
+  }
+},{
+  "id": "80ef0187-2fb6-4e2d-a66e-7e7faec14618",
+  "label": "room",
+  "type": "vertex",
+  "inE": {
+    "east": [
+      {
+        "id": "b59d56e5-2721-45d3-8f9c-966632584092",
+        "outV": "35079b35-0c95-4f0e-b81a-05ec98eb9f51"
+      }
+    ],
+    "south": [
+      {
+        "id": "b3e1ed00-73eb-44c1-95d8-daff047cff35",
+        "outV": "deb7c8f9-fb29-4411-acdc-f50528396073"
+      }
+    ]
+  },
+  "outE": {
+    "west": [
+      {
+        "id": "238c0a98-9bd2-47e1-8881-6e100ca085d9",
+        "inV": "35079b35-0c95-4f0e-b81a-05ec98eb9f51"
+      }
+    ],
+    "north": [
+      {
+        "id": "57adee4f-1c93-4c8c-8ee1-8ff6d9b82848",
+        "inV": "deb7c8f9-fb29-4411-acdc-f50528396073"
+      }
+    ]
+  },
+  "properties": {
+    "description": [
+      {
+        "id": "b0b59746-94c4-4b2b-9f35-e23409a4b7d3",
+        "value": "A really long passage.\nPossibly the longest you have ever seen.\nOr is it just really really dark?"
+      }
+    ]
+  }
+},{
+  "id": "deb7c8f9-fb29-4411-acdc-f50528396073",
+  "label": "room",
+  "type": "vertex",
+  "inE": {
+    "north": [
+      {
+        "id": "57adee4f-1c93-4c8c-8ee1-8ff6d9b82848",
+        "outV": "80ef0187-2fb6-4e2d-a66e-7e7faec14618"
+      }
+    ],
+    "south": [
+      {
+        "id": "8ff64894-65db-410b-ae81-981d3f0660c1",
+        "outV": "66109bd7-3346-4552-9139-3084890ddaba"
+      }
+    ],
+    "in": [
+      {
+        "id": "b1aa3d93-05d9-4241-b84d-8727586cf312",
+        "outV": "8bf55d9c-ff0e-4fd6-9846-817dcb483392"
+      }
+    ]
+  },
+  "outE": {
+    "south": [
+      {
+        "id": "b3e1ed00-73eb-44c1-95d8-daff047cff35",
+        "inV": "80ef0187-2fb6-4e2d-a66e-7e7faec14618"
+      }
+    ],
+    "north": [
+      {
+        "id": "6695127f-2855-4336-9a76-703d4fdec13e",
+        "inV": "66109bd7-3346-4552-9139-3084890ddaba"
+      }
+    ]
+  },
+  "properties": {
+    "description": [
+      {
+        "id": "298cbd13-778c-45bc-830f-09e7bba06f9c",
+        "value": "This room is made of pure green glass.\nyou can see through the walls into the void."
+      }
+    ]
+  }
+},{
+  "id": "66109bd7-3346-4552-9139-3084890ddaba",
+  "label": "room",
+  "type": "vertex",
+  "inE": {
+    "north": [
+      {
+        "id": "6695127f-2855-4336-9a76-703d4fdec13e",
+        "outV": "deb7c8f9-fb29-4411-acdc-f50528396073"
+      }
+    ]
+  },
+  "outE": {
+    "south": [
+      {
+        "id": "8ff64894-65db-410b-ae81-981d3f0660c1",
+        "inV": "deb7c8f9-fb29-4411-acdc-f50528396073"
+      }
+    ]
+  },
+  "properties": {
+    "made": [
+      {
+        "id": "c28bab3d-7e22-4ac8-90da-94849758430f",
+        "value": "node app"
+      }
+    ],
+    "description": [
+      {
+        "id": "8d5560a4-2f3d-4bec-a578-10798ef05b6e",
+        "value": "This room is made of green glass.\nThe grass is scratched and you cannot see through."
+      }
+    ]
+  }
+}]

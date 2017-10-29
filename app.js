@@ -12,6 +12,7 @@ Working on:
 [ ] Items in the world
 
 To Do:
+[ ] Connecting two rooms wich already exist.
 [ ] Generic describer
 [ ] Moving Items (take, hold, drop)
 [ ] Golem that moves with seperate function (or Azure functions call)
