@@ -1,10 +1,13 @@
 /*
-To Do:
+Done:
 [o] Split config out to seperate file as per example
 [o] GitIgnore Config file
 [o] Create template config file with notes on creation
 [o] Comments
-[ ] Get code into GitHub
+[o] Get code into GitHub
+[ ] Colors!
+
+To Do:
 [ ] Get room building to work (doors back and forth) - limited for now
 [ ] Items in the world
 [ ] Generic describer
@@ -26,6 +29,7 @@ To Do:
 
 const gremlin = require('gremlin');//npm install gremlin
 const readline = require('readline');//npm install readline
+const colors = require('colors');//npm install colors
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
 
 //Creates a client and tests the connection to Cosmos DB.
@@ -40,15 +44,22 @@ const gremlinClient = gremlin.createClient(
     }
 );
 
+//Write to the console in the debug colour.
+var debug = function(text){ console.log(text.grey); };
+var error = function(text){ console.error(text.red); };
+var game = function(text){ console.log(text.green); };
+var info = function(text){ console.log(text.yellow); };
+var desc = function(text){ console.log(text.cyan); };
+
 //This function wraps a standard call to cosmos and outputs any errors calling 'next' with query result. 
 var query = function(query,next){
     gremlinClient.execute(query,{},(err,results)=> {
-        if (err) console.error(err);
+        if (err) error(err);
         else next(results);
     }); 
 };
 
-console.log("[Graph connection established]");
+debug("[Graph connection established]");
 
 //Readline wraps in/out streams nicely and takes away hastle
 const rl = readline.createInterface(
@@ -58,7 +69,7 @@ const rl = readline.createInterface(
     }
 );
 
-console.log("[User connection established]");
+debug("[User connection established]");
 
 //A very simple local state for the game client. All state should be stored in the graph.
 //I know that this is slower overall, but this is not a fast paced game. 
@@ -73,21 +84,21 @@ var world = {
 //This is the function that 'makes' things. It will make rooms first and then other things.
 //This would not be in the 'normal player' interface, but in the world builder interface
 var make = function(words,next){
-    //Currently commented out because it doesn't work with rest of game currently. On To Do list.
-    /*
     if(words.length>1){
+        /*
         console.log("Making '"+words[1]+"'.");
         gremlinClient.execute("g.addV('"+words[1]+"').property('made', 'node app')",{},(err,results)=> {
             if (err) console.error(err);
             else {console.log(results);}
             next();
-        });        
+        });
+        */        
     } else {
-        console.log("Make needs a 'thing' to make. Like 'make room' for example");
+        info("The syntax for the make command is: make [room] to [direction].");
+        info("If a [room] already exists to the [direction] the command will fail.");
+        info("To add a description you will need to [walk] to the [direction] to enter the room.");
         next();
     }
-    */
-    console.log("Functionality currently disabled as it doesn't connect up the new room to a 'free door' on the current room. That is what it must do");
     next();
 };
 
@@ -96,7 +107,7 @@ var make = function(words,next){
 var add_description = function(words,next){
     var description = words.slice(1).join(" ");
     query("g.v('id','"+world.playerCurrentRoomID+"').property('description','"+description+"')",(results)=>{
-        console.log("Description added to room");
+        debug("Description added to room");
         look(next);
     });
 };
@@ -124,7 +135,7 @@ var describe = function(rooms){
             {
                 //The properties description appears to be an array by default so mapping here. 
                 //Have only ever seen one.
-                console.log(room.properties.description.map((d)=>{return d.value}).join());
+                desc(room.properties.description.map((d)=>{return d.value}).join());
                 return;
             }
         }
@@ -136,13 +147,13 @@ var describe = function(rooms){
 
 //The top level action function for describing what the player sees
 var look = function(next){
-    process.stdout.write("Looking ... ");
+    process.stdout.write("Looking ... ".green);
     //Only does current room and exists so far, but should do items in rooms too
     query(`g.v('id','${world.playerCurrentRoomID}')`, (rooms)=>{
         describe(rooms);
         //When have a generic describer, should push this function down
         getExits((results)=>{
-            console.log(`There are exits to the${results.map((e)=>{return " " + e.label}).join()}`);
+            desc(`There are exits to the${results.map((e)=>{return " " + e.label.white}).join()}`);
             next();
         });
     });
@@ -152,25 +163,25 @@ var look = function(next){
 //In the graph it disconnects the player 'in' edge from the current room node 
 //   and reconnects to the other end of the 'edge' to the new room. 
 var walk = function(words,next){
-    process.stdout.write("[" + words[0] + "ing .");//To allow for multiple verbs
+    process.stdout.write(`[${words[0].green}ing .`.green);//To allow for multiple verbs
     if(words.length>1){
         var direction = words[1];
         getExits((results)=>{//we want to make sure the users has specified a possibility
-            process.stdout.write(".");//this is a very basic 'progress bar' of dots
+            process.stdout.write(".".green);//this is a very basic 'progress bar' of dots
             var chosen = results.filter((e)=>{return e.label===direction});
             if(chosen.length===1){
                 //Need to investigte making this one query (more transactional and less prone to break)
                 query(`g.v('id','${world.playerNodeID}').outE('label','in').drop()`,(results)=>{
-                    process.stdout.write(".");//progress
+                    process.stdout.write(".".green);//progress
                     //Add an edge from palyer to the 'end' of the 'door edge'.
                     query(`g.V('id','${world.playerNodeID}').addE('in').to(g.V('id','${chosen[0].inV}'))`,(results)=>{
                         world.playerCurrentRoomID = chosen[0].inV;//Update state
-                        console.log(" arrived!]");
+                        game(" arrived!]");
                         look(next);//Give the standard description of the new room.
                     });
                 });
             } else {//Feedback if the user has made a mistake
-                console.log(`There is no exit to the '${direction}']`);
+                game(`There is no exit to the '${direction.white}']`);
                 next();
             }
         });
@@ -199,11 +210,11 @@ var act = function(command, next){
             add_description(words,next);
             break;
         case "who":
-            console.log("You are: '" + world.playerNodeID + "'");
+            info("You are: '" + world.playerNodeID + "'");
             next();
             break;
         default:
-            console.log("What?");
+            info("What?");
             next();
     }
 };
@@ -214,15 +225,15 @@ var act = function(command, next){
 
 //Gets the player node id from the graph
 var setup_player = function(next){
-    process.stdout.write("\t[Player ... ");
+    process.stdout.write("\t[Player ... ".grey);
     //Would need to change this for multiple players. 
     //Collect player name from user and connect to that node.
     query("g.V().has('label','player')",(results)=>{
         if(results.length===1){
             world.playerNodeID = results[0].id;
-            console.info(`Player ID: ${world.playerNodeID}]`);
+            debug(`Player ID: ${world.playerNodeID}]`);
         } else {
-            console.error("\t[Too many player nodes.]");
+            error("\t[Too many player nodes.]");
         }
         next();
     });
@@ -230,13 +241,13 @@ var setup_player = function(next){
 
 //Collect the current room ID from the user in the graph
 var setup_room = function(next){
-    process.stdout.write("\t[Room   ... ");
+    process.stdout.write("\t[Room   ... ".grey);
     query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
         if(results.length===1){
             world.playerCurrentRoomID = results[0].id;
-            console.info(`Player Room ID: ${world.playerCurrentRoomID}]`);
+            debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
         } else {
-            console.error("\t[Player can only be in one room]");
+            error("\t[Player can only be in one room]");
         }
         next();
     });
@@ -245,8 +256,8 @@ var setup_room = function(next){
 //This is the main game setup. 
 //Other setup functions are all called from here. 
 var setup = function(next){
-    console.log('[Setting up ...');
-    var last = ()=>{console.log(' Setup complete!]\n');next();}
+    debug('[Setting up ...');
+    var last = ()=>{debug(' Setup complete!]\n');next();}
     var two = ()=>{setup_room(last);}
     setup_player(two);//Call back style for chaining.
 };
@@ -258,17 +269,16 @@ var setup = function(next){
 //This is the main game loop.
 //It is asnyc and recursive to work with RL and Graph APIs.
 var interactive = function(finalise){
-    rl.question('\n[What would you like to do?]\n> ',(response)=>{
+    rl.question('\n[What would you like to do?]\n> '.green,(response)=>{
         if(response === "quit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
     });
 };
 
-console.log('[Welcome to world creator]');
-
+game('[Welcome to the world creator]');
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
 var kill = function(){
-    console.log('[BYE!]');
+    game('[BYE!]');
     rl.close();
     process.exit();
 };
