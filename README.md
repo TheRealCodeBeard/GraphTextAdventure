@@ -9,3 +9,7 @@ To use this you will need a [Cosmos DB graph account](https://azure.microsoft.co
 
 # config.js
 You will need your own 'config.js' file. Copy 'config_template.js' and call it 'config.js'. Fill in the details fron the graph you set up in Cosmos DB and you are ready to go.
+
+# running
+When you have set it all up you will need to make sure you have the right modules installed as detailed at the begining of app.js.
+Run with node app.js as you would expect.
