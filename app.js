@@ -5,11 +5,13 @@ Done:
 [o] Create template config file with notes on creation
 [o] Comments
 [o] Get code into GitHub
-[ ] Colors!
+[o] Colors!
+[o] Get room building to work (doors back and forth) - limited for now
+
+Working on:
+[ ] Items in the world
 
 To Do:
-[ ] Get room building to work (doors back and forth) - limited for now
-[ ] Items in the world
 [ ] Generic describer
 [ ] Moving Items (take, hold, drop)
 [ ] Golem that moves with seperate function (or Azure functions call)
@@ -110,9 +112,17 @@ var make = function(words,next){
                     info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
                     next();
                 } else {
-                    info(`OK. Building Room to the ${direction.white}.`);
-                    error("Not written this bit yet");
-                    next();
+                    info(`OK. Building Room to the ${direction.white}...`);
+                    var opposite = world.possibleDirections[direction];
+                    debug(`Return door to: ${opposite}.`);
+                    query(`g.addV('room').property('made','node app').addE('${opposite}').to(g.V('id','${world.playerCurrentRoomID}'))`,(newEdges)=>{
+                            info(`Connecting door to current room...`);
+                            //outV of the NEW EDGE is the NEW ROOM
+                            query(`g.V('id','${world.playerCurrentRoomID}').addE('${direction}').to(g.V('id','${newEdges[0].outV}'))`,(results)=>{
+                                info(`Connecting door to current room...`);
+                                next();                               
+                            });
+                    });
                 }
             });
         } else {
@@ -236,7 +246,11 @@ var act = function(command, next){
             add_description(words,next);
             break;
         case "who":
-            info("You are: '" + world.playerNodeID + "'");
+            info(`You are: '${world.playerNodeID}'`);
+            next();
+            break;
+        case "where":
+            info(`You are in: '${world.playerCurrentRoomID}'`);
             next();
             break;
         default:
@@ -305,7 +319,7 @@ game('                                \n  Welcome to the world creator  \n      
 
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
 var kill = function(){
-    game('        \n  Bye!  \n        '.bgRed);
+    game('        \n  Bye!  \n        '.bgWhite);
     rl.close();
     process.exit();
 };
