@@ -116,12 +116,12 @@ var make = function(words,next){
                     var opposite = world.possibleDirections[direction];
                     debug(`Return door to: ${opposite}.`);
                     query(`g.addV('room').property('made','node app').addE('${opposite}').to(g.V('id','${world.playerCurrentRoomID}'))`,(newEdges)=>{
+                        info(`Connecting door to current room...`);
+                        //outV of the NEW EDGE is the NEW ROOM
+                        query(`g.V('id','${world.playerCurrentRoomID}').addE('${direction}').to(g.V('id','${newEdges[0].outV}'))`,(results)=>{
                             info(`Connecting door to current room...`);
-                            //outV of the NEW EDGE is the NEW ROOM
-                            query(`g.V('id','${world.playerCurrentRoomID}').addE('${direction}').to(g.V('id','${newEdges[0].outV}'))`,(results)=>{
-                                info(`Connecting door to current room...`);
-                                next();                               
-                            });
+                            next();                  
+                        });
                     });
                 }
             });
@@ -129,16 +129,7 @@ var make = function(words,next){
             info(`You can't make a room to the ${direction.white}.`);
             info(`Only 'north, south, east and west' are currently allowed.`);
             next();
-        }
-
-        /*
-        console.log("Making '"+words[1]+"'.");
-        gremlinClient.execute("g.addV('"+words[1]+"').property('made', 'node app')",{},(err,results)=> {
-            if (err) console.error(err);
-            else {console.log(results);}
-            next();
-        });
-        */        
+        }     
     } else {
         info("The syntax for the make command is: "+ "make [room] to [direction].".white);
         info("If a [room] already exists to the [direction] the command will fail.");
