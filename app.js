@@ -51,12 +51,22 @@ var game = function(text){ console.log(text.green); };
 var info = function(text){ console.log(text.yellow); };
 var desc = function(text){ console.log(text.cyan); };
 
+
+/* 
+   UTILITY FUNCTIONS
+*/
+
 //This function wraps a standard call to cosmos and outputs any errors calling 'next' with query result. 
 var query = function(query,next){
     gremlinClient.execute(query,{},(err,results)=> {
         if (err) error(err);
         else next(results);
     }); 
+};
+
+//This retuns the 'out edges' from the players current room. An out edge represents a door.
+var getExits = function(next){
+    query(`g.v('id','${world.playerCurrentRoomID}').outE()`,(results)=>{next(results);});
 };
 
 debug("[Graph connection established]");
@@ -75,7 +85,13 @@ debug("[User connection established]");
 //I know that this is slower overall, but this is not a fast paced game. 
 var world = {
     playerNodeID:null,
-    playerCurrentRoomID:null
+    playerCurrentRoomID:null,
+    possibleDirections:{
+        "north":"south",
+        "east":"west",
+        "south":"north",
+        "west":"east"
+    }
 };
 
 /* 
@@ -85,7 +101,26 @@ var world = {
 //This would not be in the 'normal player' interface, but in the world builder interface
 var make = function(words,next){
     if(words.length===4 && words[1]==='room' && words[2]==='to'){
-        var dir = words[3];
+        var direction = words[3];
+        if(world.possibleDirections[direction]){
+            info("Checking...");
+            getExits((rooms)=>{
+                if(rooms.filter((r)=>r.label===direction).length>0){
+                    info(`There is already a room to the ${direction.white}.`);
+                    info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
+                    next();
+                } else {
+                    info(`OK. Building Room to the ${direction.white}.`);
+                    error("Not written this bit yet");
+                    next();
+                }
+            });
+        } else {
+            info(`You can't make a room to the ${direction.white}.`);
+            info(`Only 'north, south, east and west' are currently allowed.`);
+            next();
+        }
+
         /*
         console.log("Making '"+words[1]+"'.");
         gremlinClient.execute("g.addV('"+words[1]+"').property('made', 'node app')",{},(err,results)=> {
@@ -100,7 +135,6 @@ var make = function(words,next){
         info("To add a description you will need to [walk] to the [direction] to enter the room.");
         next();
     }
-    next();
 };
 
 //This function adds the 'description' property to the current room node. 
@@ -111,15 +145,6 @@ var add_description = function(words,next){
         debug("Description added to room");
         look(next);
     });
-};
-
-/* 
-   UTILITY FUNCTIONS
-*/
-
-//This retuns the 'out edges' from the players current room. An out edge represents a door.
-var getExits = function(next){
-    query(`g.v('id','${world.playerCurrentRoomID}').outE()`,(results)=>{next(results);});
 };
 
 /* 
@@ -280,7 +305,7 @@ game('                                \n  Welcome to the world creator  \n      
 
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
 var kill = function(){
-    game('        \n  Bye!  \n        '.bgWhite);
+    game('        \n  Bye!  \n        '.bgRed);
     rl.close();
     process.exit();
 };
