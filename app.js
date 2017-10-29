@@ -84,7 +84,8 @@ var world = {
 //This is the function that 'makes' things. It will make rooms first and then other things.
 //This would not be in the 'normal player' interface, but in the world builder interface
 var make = function(words,next){
-    if(words.length>1){
+    if(words.length===4 && words[1]==='room' && words[2]==='to'){
+        var dir = words[3];
         /*
         console.log("Making '"+words[1]+"'.");
         gremlinClient.execute("g.addV('"+words[1]+"').property('made', 'node app')",{},(err,results)=> {
@@ -94,7 +95,7 @@ var make = function(words,next){
         });
         */        
     } else {
-        info("The syntax for the make command is: make [room] to [direction].");
+        info("The syntax for the make command is: "+ "make [room] to [direction].".white);
         info("If a [room] already exists to the [direction] the command will fail.");
         info("To add a description you will need to [walk] to the [direction] to enter the room.");
         next();
@@ -275,10 +276,11 @@ var interactive = function(finalise){
     });
 };
 
-game('[Welcome to the world creator]');
+game('                                \n  Welcome to the world creator  \n                                '.bgWhite);
+
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
 var kill = function(){
-    game('[BYE!]');
+    game('        \n  Bye!  \n        '.bgWhite);
     rl.close();
     process.exit();
 };
