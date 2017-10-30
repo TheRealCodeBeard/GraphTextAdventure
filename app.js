@@ -9,9 +9,10 @@ Done:
 [o] Get room building to work (doors back and forth) - limited for now
 
 Working on:
-[ ] Items in the world
+[ ] Refactors based on Tim S feedback
 
 To Do:
+[ ] Items in the world
 [ ] Connecting two rooms wich already exist.
 [ ] Generic describer
 [ ] Moving Items (take, hold, drop)
@@ -54,7 +55,6 @@ var game = function(text){ console.log(text.green); };
 var info = function(text){ console.log(text.yellow); };
 var desc = function(text){ console.log(text.cyan); };
 
-
 /* 
    UTILITY FUNCTIONS
 */
@@ -65,6 +65,20 @@ var query = function(query,next){
         if (err) error(err);
         else next(results);
     }); 
+};
+
+var query2 = function(query,parameters,next){
+    gremlinClient.execute(query,parameters,(err,results)=> {
+        if (err) error(err);
+        else next(results);
+    }); 
+};
+
+var test = function(next){
+    query2("g.v('id',playerid).outE()",{playerid:world.playerNodeID},(results)=>{
+        debug(JSON.stringify(results));
+        next();
+    });
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
@@ -108,7 +122,7 @@ var make = function(words,next){
         if(world.possibleDirections[direction]){
             info("Checking...");
             getExits((rooms)=>{
-                if(rooms.filter((r)=>r.label===direction).length>0){
+                if(rooms.some(r=>r.label===direction)){
                     info(`There is already a room to the ${direction.white}.`);
                     info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
                     next();
@@ -159,11 +173,10 @@ var describe = function(rooms){
     if(rooms.length===1){
         var room = rooms[0];
         if(room.properties){
-            if(room.properties.description && room.properties.description.length>0)
-            {
+            if(room.properties.description && room.properties.description.length>0){
                 //The properties description appears to be an array by default so mapping here. 
                 //Have only ever seen one.
-                desc(room.properties.description.map((d)=>{return d.value}).join());
+                desc(room.properties.description.map(d=>d.value).join());
                 return;
             }
         }
@@ -245,6 +258,9 @@ var act = function(command, next){
             info(`You are in: '${world.playerCurrentRoomID}'`);
             next();
             break;
+        case "test":
+            test(next);
+            break;
         default:
             info("What?");
             next();
@@ -307,11 +323,20 @@ var interactive = function(finalise){
     });
 };
 
-game('                                \n  Welcome to the world creator  \n                                '.bgWhite);
+game(
+`                                  
+   Welcome to the world creator   
+                                  `
+.bgWhite
+);
 
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
 var kill = function(){
-    game('        \n  Bye!  \n        '.bgWhite);
+    game(
+`        
+  Bye!  
+        `
+        .bgWhite);
     rl.close();
     process.exit();
 };
