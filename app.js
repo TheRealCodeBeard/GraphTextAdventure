@@ -7,11 +7,14 @@ Done:
 [o] Get code into GitHub
 [o] Colors!
 [o] Get room building to work (doors back and forth) - limited for now
+[o] Refactors based on Tim S feedback
+[o] Prove that Parameterised queries work
 
 Working on:
-[ ] Refactors based on Tim S feedback
+[ ] Update to parameterised queries 
 
 To Do:
+[ ] LET vs VAR refactors
 [ ] Items in the world
 [ ] Connecting two rooms wich already exist.
 [ ] Generic describer
@@ -60,14 +63,14 @@ var desc = function(text){ console.log(text.cyan); };
 */
 
 //This function wraps a standard call to cosmos and outputs any errors calling 'next' with query result. 
-var query = function(query,next){
+var old_query = function(query,next){
     gremlinClient.execute(query,{},(err,results)=> {
         if (err) error(err);
         else next(results);
     }); 
 };
 
-var query2 = function(query,parameters,next){
+var query = function(query,parameters,next){
     gremlinClient.execute(query,parameters,(err,results)=> {
         if (err) error(err);
         else next(results);
@@ -75,15 +78,20 @@ var query2 = function(query,parameters,next){
 };
 
 var test = function(next){
-    query2("g.v('id',playerid).outE()",{playerid:world.playerNodeID},(results)=>{
+    //A place to test stuff. 
+    error('No test code currently live');
+    next();
+    /*
+    query("g.v('id',playerid).outE()",{playerid:world.playerNodeID},(results)=>{
         debug(JSON.stringify(results));
         next();
     });
+    */
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
 var getExits = function(next){
-    query(`g.v('id','${world.playerCurrentRoomID}').outE()`,(results)=>{next(results);});
+    query("g.v('id',roomid).outE()",{roomid:world.playerCurrentRoomID},results=>next(results));
 };
 
 debug("[Graph connection established]");
@@ -130,10 +138,10 @@ var make = function(words,next){
                     info(`OK. Building Room to the ${direction.white}...`);
                     var opposite = world.possibleDirections[direction];
                     debug(`Return door to: ${opposite}.`);
-                    query(`g.addV('room').property('made','node app').addE('${opposite}').to(g.V('id','${world.playerCurrentRoomID}'))`,(newEdges)=>{
+                    old_query(`g.addV('room').property('made','node app').addE('${opposite}').to(g.V('id','${world.playerCurrentRoomID}'))`,(newEdges)=>{
                         info(`Connecting door to current room...`);
                         //outV of the NEW EDGE is the NEW ROOM
-                        query(`g.V('id','${world.playerCurrentRoomID}').addE('${direction}').to(g.V('id','${newEdges[0].outV}'))`,(results)=>{
+                        old_query(`g.V('id','${world.playerCurrentRoomID}').addE('${direction}').to(g.V('id','${newEdges[0].outV}'))`,(results)=>{
                             info(`Connecting door to current room...`);
                             next();                  
                         });
@@ -157,7 +165,7 @@ var make = function(words,next){
 //It will overwrite what is there currently
 var add_description = function(words,next){
     var description = words.slice(1).join(" ");
-    query("g.v('id','"+world.playerCurrentRoomID+"').property('description','"+description+"')",(results)=>{
+    old_query("g.v('id','"+world.playerCurrentRoomID+"').property('description','"+description+"')",(results)=>{
         debug("Description added to room");
         look(next);
     });
@@ -190,7 +198,7 @@ var describe = function(rooms){
 var look = function(next){
     process.stdout.write("Looking ... ".green);
     //Only does current room and exists so far, but should do items in rooms too
-    query(`g.v('id','${world.playerCurrentRoomID}')`, (rooms)=>{
+    old_query(`g.v('id','${world.playerCurrentRoomID}')`, (rooms)=>{
         describe(rooms);
         //When have a generic describer, should push this function down
         getExits((results)=>{
@@ -212,10 +220,10 @@ var walk = function(words,next){
             var chosen = results.filter((e)=>{return e.label===direction});
             if(chosen.length===1){
                 //Need to investigte making this one query (more transactional and less prone to break)
-                query(`g.v('id','${world.playerNodeID}').outE('label','in').drop()`,(results)=>{
+                old_query(`g.v('id','${world.playerNodeID}').outE('label','in').drop()`,(results)=>{
                     process.stdout.write(".".green);//progress
                     //Add an edge from palyer to the 'end' of the 'door edge'.
-                    query(`g.V('id','${world.playerNodeID}').addE('in').to(g.V('id','${chosen[0].inV}'))`,(results)=>{
+                    old_query(`g.V('id','${world.playerNodeID}').addE('in').to(g.V('id','${chosen[0].inV}'))`,(results)=>{
                         world.playerCurrentRoomID = chosen[0].inV;//Update state
                         game(" arrived!]");
                         look(next);//Give the standard description of the new room.
@@ -276,7 +284,7 @@ var setup_player = function(next){
     process.stdout.write("\t[Player ... ".grey);
     //Would need to change this for multiple players. 
     //Collect player name from user and connect to that node.
-    query("g.V().has('label','player')",(results)=>{
+    old_query("g.V().has('label','player')",(results)=>{
         if(results.length===1){
             world.playerNodeID = results[0].id;
             debug(`Player ID: ${world.playerNodeID}]`);
@@ -290,7 +298,7 @@ var setup_player = function(next){
 //Collect the current room ID from the user in the graph
 var setup_room = function(next){
     process.stdout.write("\t[Room   ... ".grey);
-    query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
+    old_query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
         if(results.length===1){
             world.playerCurrentRoomID = results[0].id;
             debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
