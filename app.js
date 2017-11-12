@@ -71,8 +71,9 @@ var old_query = function(query,next){
 };
 
 var query = function(query,parameters,next){
+    debug(query);
     gremlinClient.execute(query,parameters,(err,results)=> {
-        if (err) error(err);
+        if (err)  error(`Error: ${err}`);
         else next(results);
     }); 
 };
@@ -138,14 +139,18 @@ var make = function(words,next){
                     info(`OK. Building Room to the ${direction.white}...`);
                     var opposite = world.possibleDirections[direction];
                     debug(`Return door to: ${opposite}.`);
-                    old_query(`g.addV('room').property('made','node app').addE('${opposite}').to(g.V('id','${world.playerCurrentRoomID}'))`,(newEdges)=>{
-                        info(`Connecting door to current room...`);
-                        //outV of the NEW EDGE is the NEW ROOM
-                        old_query(`g.V('id','${world.playerCurrentRoomID}').addE('${direction}').to(g.V('id','${newEdges[0].outV}'))`,(results)=>{
+                    query("g.addV('room').property('made','node app').addE(opp).to(g.V('id',playerRoomId))",
+                        {opp:opposite, playerRoomId:world.playerCurrentRoomID},
+                        (newEdges)=>{
                             info(`Connecting door to current room...`);
-                            next();                  
-                        });
-                    });
+                            query("g.V('id',playerRoomId).addE(dir).to(g.V('id',newRoomId))",
+                            {playerRoomId:world.playerCurrentRoomID,dir:direction,newRoomId:newEdges[0].outV},
+                            (result)=>{
+                                info(`Connected door to current room`);
+                                next();
+                            });
+                        }
+                    );
                 }
             });
         } else {
