@@ -6,13 +6,13 @@ Done:
 [o] Comments
 [o] Get code into GitHub
 [o] Colors!
-[o] Get room building to work (doors back and forth) - limited for now
+[o] Get room builing to work (doors back and forth) - limited for now
 [o] Refactors based on Tim S feedback
 [o] Prove that Parameterised queries work
 [o] Update to parameterised queries 
+[o] LET vs VAR refactors
 
 Working on:
-[ ] LET vs VAR refactors
 
 To Do:
 [ ] Items in the world
