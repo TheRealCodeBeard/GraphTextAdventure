@@ -9,12 +9,12 @@ Done:
 [o] Get room building to work (doors back and forth) - limited for now
 [o] Refactors based on Tim S feedback
 [o] Prove that Parameterised queries work
+[o] Update to parameterised queries 
 
 Working on:
-[ ] Update to parameterised queries 
+[ ] LET vs VAR refactors
 
 To Do:
-[ ] LET vs VAR refactors
 [ ] Items in the world
 [ ] Connecting two rooms wich already exist.
 [ ] Generic describer
@@ -22,6 +22,7 @@ To Do:
 [ ] Golem that moves with seperate function (or Azure functions call)
 [ ] Investigate making drop/attach one query
 [ ] Seperate 'text strings' out into a config file.
+[ ] Drawing the map
 */
 
 /*
@@ -52,33 +53,26 @@ const gremlinClient = gremlin.createClient(
 );
 
 //Write to the console in the debug colour.
-var debug = function(text){ console.log(text.grey); };
-var error = function(text){ console.error(text.red); };
-var game = function(text){ console.log(text.green); };
-var info = function(text){ console.log(text.yellow); };
-var desc = function(text){ console.log(text.cyan); };
+let debug = function(text){ console.log(text.grey); };
+let error = function(text){ console.error(text.red); };
+let game = function(text){ console.log(text.green); };
+let info = function(text){ console.log(text.yellow); };
+let desc = function(text){ console.log(text.cyan); };
 
 /* 
    UTILITY FUNCTIONS
 */
 
 //This function wraps a standard call to cosmos and outputs any errors calling 'next' with query result. 
-var old_query = function(query,next){
-    gremlinClient.execute(query,{},(err,results)=> {
-        if (err) error(err);
-        else next(results);
-    }); 
-};
-
-var query = function(query,parameters,next){
-    debug(query);
+let query = function(query,parameters,next){
+    //debug(query);
     gremlinClient.execute(query,parameters,(err,results)=> {
         if (err)  error(`Error: ${err}`);
         else next(results);
     }); 
 };
 
-var test = function(next){
+let test = function(next){
     //A place to test stuff. 
     error('No test code currently live');
     next();
@@ -91,14 +85,14 @@ var test = function(next){
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
-var getExits = function(next){
+let getExits = function(next){
     query("g.v('id',roomid).outE()",{roomid:world.playerCurrentRoomID},results=>next(results));
 };
 
 debug("[Graph connection established]");
 
 //Readline wraps in/out streams nicely and takes away hastle
-const rl = readline.createInterface(
+let rl = readline.createInterface(
     {
         input: process.stdin,
         output: process.stdout
@@ -109,7 +103,7 @@ debug("[User connection established]");
 
 //A very simple local state for the game client. All state should be stored in the graph.
 //I know that this is slower overall, but this is not a fast paced game. 
-var world = {
+let world = {
     playerNodeID:null,
     playerCurrentRoomID:null,
     possibleDirections:{
@@ -125,9 +119,9 @@ var world = {
 */
 //This is the function that 'makes' things. It will make rooms first and then other things.
 //This would not be in the 'normal player' interface, but in the world builder interface
-var make = function(words,next){
+let make = function(words,next){
     if(words.length===4 && words[1]==='room' && words[2]==='to'){
-        var direction = words[3];
+        let direction = words[3];
         if(world.possibleDirections[direction]){
             info("Checking...");
             getExits((rooms)=>{
@@ -137,7 +131,7 @@ var make = function(words,next){
                     next();
                 } else {
                     info(`OK. Building Room to the ${direction.white}...`);
-                    var opposite = world.possibleDirections[direction];
+                    let opposite = world.possibleDirections[direction];
                     debug(`Return door to: ${opposite}.`);
                     query("g.addV('room').property('made','node app').addE(opp).to(g.V('id',playerRoomId))",
                         {opp:opposite, playerRoomId:world.playerCurrentRoomID},
@@ -168,8 +162,8 @@ var make = function(words,next){
 
 //This function adds the 'description' property to the current room node. 
 //It will overwrite what is there currently
-var add_description = function(words,next){
-    var description = words.slice(1).join(" ");
+let add_description = function(words,next){
+    let description = words.slice(1).join(" ");
     query("g.v('id',playerRoomId).property('description',desc)",
         {playerRoomId:world.playerCurrentRoomID,desc:description},
         (results)=>{
@@ -185,9 +179,9 @@ var add_description = function(words,next){
 
 //This provides the description property of the first rooms in the array given.
 //Should turn this into a generic 'describer' that takes in any kind of object array and collates whole description
-var describe = function(rooms){
+let describe = function(rooms){
     if(rooms.length===1){
-        var room = rooms[0];
+        let room = rooms[0];
         if(room.properties){
             if(room.properties.description && room.properties.description.length>0){
                 //The properties description appears to be an array by default so mapping here. 
@@ -203,7 +197,7 @@ var describe = function(rooms){
 };
 
 //The top level action function for describing what the player sees
-var look = function(next){
+let look = function(next){
     process.stdout.write("Looking ... ".green);
     //Only does current room and exists so far, but should do items in rooms too
     query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
@@ -219,13 +213,13 @@ var look = function(next){
 //This function moves the player to other locations. 
 //In the graph it disconnects the player 'in' edge from the current room node 
 //   and reconnects to the other end of the 'edge' to the new room. 
-var walk = function(words,next){
+let walk = function(words,next){
     process.stdout.write(`[${words[0].green}ing .`.green);//To allow for multiple verbs
     if(words.length>1){
-        var direction = words[1];
+        let direction = words[1];
         getExits((results)=>{//we want to make sure the users has specified a possibility
             process.stdout.write(".".green);//this is a very basic 'progress bar' of dots
-            var chosen = results.filter((e)=>{return e.label===direction});
+            let chosen = results.filter((e)=>{return e.label===direction});
             if(chosen.length===1){
                 //Need to investigte making this one query (more transactional and less prone to break)
                 query("g.v('id',playerId).outE('label','in').drop()",
@@ -254,8 +248,8 @@ var walk = function(words,next){
 
 //This is the main 'parser' that turns a user input into the function call.
 //Very very basic. Would be better as a bot.
-var act = function(command, next){
-    var words = command.split(" ");
+let act = function(command, next){
+    let words = command.split(" ");
     switch(words[0]) {
         case "look": 
             look(next);
@@ -292,7 +286,7 @@ var act = function(command, next){
 */
 
 //Gets the player node id from the graph
-var setup_player = function(next){
+let setup_player = function(next){
     process.stdout.write("\t[Player ... ".grey);
     //Would need to change this for multiple players. 
     //Collect player name from user and connect to that node.
@@ -308,7 +302,7 @@ var setup_player = function(next){
 };
 
 //Collect the current room ID from the user in the graph
-var setup_room = function(next){
+let setup_room = function(next){
     process.stdout.write("\t[Room   ... ".grey);
     query("g.v('id',playerId).out('in')",
         {playerId:world.playerNodeID},
@@ -326,10 +320,10 @@ var setup_room = function(next){
 
 //This is the main game setup. 
 //Other setup functions are all called from here. 
-var setup = function(next){
+let setup = function(next){
     debug('[Setting up ...');
-    var last = ()=>{debug(' Setup complete!]\n');next();}
-    var two = ()=>{setup_room(last);}
+    let last = ()=>{debug(' Setup complete!]\n');next();}
+    let two = ()=>{setup_room(last);}
     setup_player(two);//Call back style for chaining.
 };
 
@@ -339,7 +333,7 @@ var setup = function(next){
 
 //This is the main game loop.
 //It is asnyc and recursive to work with RL and Graph APIs.
-var interactive = function(finalise){
+let interactive = function(finalise){
     rl.question('\n[What would you like to do?]\n> '.green,(response)=>{
         if(response === "quit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
@@ -354,7 +348,7 @@ game(
 );
 
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
-var kill = function(){
+let kill = function(){
     game(
 `        
   Bye!  
