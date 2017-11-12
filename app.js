@@ -228,16 +228,18 @@ var walk = function(words,next){
             var chosen = results.filter((e)=>{return e.label===direction});
             if(chosen.length===1){
                 //Need to investigte making this one query (more transactional and less prone to break)
-                query("g.v('id',playerId).outE('label','in').drop()",{playerId:world.playerNodeID},(results)=>{
-                    process.stdout.write(".".green);//progress
-                    //Add an edge from palyer to the 'end' of the 'door edge'.
-                    query("g.v('id',playerId).addE('in').to(g.v('id',newRoomId))",
-                    {playerId:world.playerNodeID,newRoomId:chosen[0].inV},
+                query("g.v('id',playerId).outE('label','in').drop()",
+                    {playerId:world.playerNodeID},
                     (results)=>{
-                        world.playerCurrentRoomID = chosen[0].inV;//Update state
-                        game(" arrived!]");
-                        look(next);//Give the standard description of the new room.
-                    });
+                        process.stdout.write(".".green);//progress
+                        //Add an edge from palyer to the 'end' of the 'door edge'.
+                        query("g.v('id',playerId).addE('in').to(g.v('id',newRoomId))",
+                            {playerId:world.playerNodeID,newRoomId:chosen[0].inV},
+                            (results)=>{
+                                world.playerCurrentRoomID = chosen[0].inV;//Update state
+                                game(" arrived!]");
+                                look(next);//Give the standard description of the new room.
+                        });
                 });
             } else {//Feedback if the user has made a mistake
                 game(`There is no exit to the '${direction.white}']`);
@@ -294,7 +296,7 @@ var setup_player = function(next){
     process.stdout.write("\t[Player ... ".grey);
     //Would need to change this for multiple players. 
     //Collect player name from user and connect to that node.
-    old_query("g.V().has('label','player')",(results)=>{
+    query("g.V().has('label','player')",{},(results)=>{
         if(results.length===1){
             world.playerNodeID = results[0].id;
             debug(`Player ID: ${world.playerNodeID}]`);
@@ -308,14 +310,17 @@ var setup_player = function(next){
 //Collect the current room ID from the user in the graph
 var setup_room = function(next){
     process.stdout.write("\t[Room   ... ".grey);
-    old_query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
-        if(results.length===1){
-            world.playerCurrentRoomID = results[0].id;
-            debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
-        } else {
-            error("\t[Player can only be in one room]");
-        }
-        next();
+    query("g.v('id',playerId).out('in')",
+        {playerId:world.playerNodeID},
+        (results)=>{
+        //old_query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
+            if(results.length===1){
+                world.playerCurrentRoomID = results[0].id;
+                debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
+            } else {
+                error("\t[Player can only be in one room]");
+            }
+            next();
     });
 };
 
