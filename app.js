@@ -170,10 +170,13 @@ var make = function(words,next){
 //It will overwrite what is there currently
 var add_description = function(words,next){
     var description = words.slice(1).join(" ");
-    old_query("g.v('id','"+world.playerCurrentRoomID+"').property('description','"+description+"')",(results)=>{
-        debug("Description added to room");
-        look(next);
-    });
+    query("g.v('id',playerRoomId).property('description',desc)",
+        {playerRoomId:world.playerCurrentRoomID,desc:description},
+        (results)=>{
+            debug("Description added to room");
+            look(next);        
+        }
+    );
 };
 
 /* 
