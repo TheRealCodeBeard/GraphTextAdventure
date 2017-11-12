@@ -206,7 +206,7 @@ var describe = function(rooms){
 var look = function(next){
     process.stdout.write("Looking ... ".green);
     //Only does current room and exists so far, but should do items in rooms too
-    old_query(`g.v('id','${world.playerCurrentRoomID}')`, (rooms)=>{
+    query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
         describe(rooms);
         //When have a generic describer, should push this function down
         getExits((results)=>{
