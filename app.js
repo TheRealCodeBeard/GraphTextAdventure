@@ -228,10 +228,12 @@ var walk = function(words,next){
             var chosen = results.filter((e)=>{return e.label===direction});
             if(chosen.length===1){
                 //Need to investigte making this one query (more transactional and less prone to break)
-                old_query(`g.v('id','${world.playerNodeID}').outE('label','in').drop()`,(results)=>{
+                query("g.v('id',playerId).outE('label','in').drop()",{playerId:world.playerNodeID},(results)=>{
                     process.stdout.write(".".green);//progress
                     //Add an edge from palyer to the 'end' of the 'door edge'.
-                    old_query(`g.V('id','${world.playerNodeID}').addE('in').to(g.V('id','${chosen[0].inV}'))`,(results)=>{
+                    query("g.v('id',playerId).addE('in').to(g.v('id',newRoomId))",
+                    {playerId:world.playerNodeID,newRoomId:chosen[0].inV},
+                    (results)=>{
                         world.playerCurrentRoomID = chosen[0].inV;//Update state
                         game(" arrived!]");
                         look(next);//Give the standard description of the new room.
