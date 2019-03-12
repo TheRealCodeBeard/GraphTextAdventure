@@ -6,6 +6,9 @@ let graph_data = [
         data:{id:'b'}
     },
     {
+        data:{id:'banana'}
+    }
+    {
         data:{id:'ab', source: 'a', target:'b'}
     }
 ];
