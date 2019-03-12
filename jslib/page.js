@@ -26,22 +26,30 @@ let graph_style = [
         selector:'node',
         style: {
             'background-color':'#666',
-            'label': 'data(name)'
+            'label': 'data(name)',
+            'text-background-color':'white',
+            'text-background-opacity':1
         }
     },
     {
         selector:'edge',
         style: {
             'curve-style':'bezier',
-            'label':'data(label)'
+            'label':'data(label)',
+            'target-arrow-shape':'triangle-backcurve',
+            'target-arrow-color':'green',
+            'source-arrow-shape':'circle',
+            'source-arrow-color':'grey',
+            'source-endpoint':'inside-to-node',
+            'text-background-color':'white',
+            'text-background-opacity':1
         }
     }
 ];
 
 let graph_layout = {
-    name:'grid',
-    rows: 2,
-    columns: 2
+    name:'breadthfirst',
+    padding:120
 };
 
 let go = function(){
