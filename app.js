@@ -34,7 +34,7 @@ To Do:
 
     Thanks, Phil.
 */
-
+const fs = require('fs');//used to write graph dumps while testing visualisation
 const gremlin = require('gremlin');//npm install gremlin
 const readline = require('readline');//npm install readline
 const colors = require('colors');//npm install colors
@@ -70,6 +70,22 @@ let query = function(query,parameters,next){
         if (err)  error(`Error: ${err}`);
         else next(results);
     }); 
+};
+
+//writes out a file of nodes then edges
+let dump_whole_graph = function(next){
+    query("g.V().map(values('id','label','description').fold())",null,(node_results)=>{
+        nodes = JSON.stringify(node_results);
+        query("g.E()",null,(edge_results)=>{
+            edges = JSON.stringify(edge_results);
+            output = `let graph_data_actual = {nodes:${nodes},edges:${edges}};`
+            fs.writeFile("./data/actual_cosmos.js", output, function(err) {
+                if(err) {return error(err);}
+                else {debug("graph output!");}
+                next();
+            }); 
+        });
+    });
 };
 
 let test = function(next){
@@ -274,6 +290,9 @@ let act = function(command, next){
             break;
         case "test":
             test(next);
+            break;
+        case "dump":
+            dump_whole_graph(next);
             break;
         default:
             info("What?");
