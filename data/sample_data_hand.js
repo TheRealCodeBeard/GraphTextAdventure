@@ -25,5 +25,8 @@ let graph_data_hand = [
     },
     {
         data:{id:'de', source: 'd', target:'e'}
+    },
+    {
+        data:{id:'ed', source: 'e', target:'d'}
     }
 ];

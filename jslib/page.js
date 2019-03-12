@@ -6,6 +6,12 @@ let graph_style = [
             'background-color':'#666',
             'label': 'data(name)'
         }
+    },
+    {
+        selector:'edge',
+        style: {
+            'curve-style':'bezier'
+        }
     }
 ];
 
