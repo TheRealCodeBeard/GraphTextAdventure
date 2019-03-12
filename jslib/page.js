@@ -20,7 +20,10 @@ let graph_style = [
     }
 ];
 
-let graph_layout
+let graph_layout = {
+    name:'grid',
+    rows: 1
+};
 
 let go = function(){
     let cy = cytoscape({
