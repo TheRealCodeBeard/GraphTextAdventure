@@ -11,18 +11,18 @@ Done:
 [o] Prove that Parameterised queries work
 [o] Update to parameterised queries 
 [o] LET vs VAR refactors
+[o] Drawing the map - simple version done
+[o] Items in the world
+[o] Moving Items (take, hold, drop)
 
 Working on:
 
 To Do:
-[ ] Items in the world
 [ ] Connecting two rooms wich already exist.
 [ ] Generic describer
-[ ] Moving Items (take, hold, drop)
 [ ] Golem that moves with seperate function (or Azure functions call)
-[ ] Investigate making drop/attach one query
+[ ] Investigate making drop/attach one query - a transaction? Stored Procedure?
 [ ] Seperate 'text strings' out into a config file.
-[ ] Drawing the map
 */
 
 /*
