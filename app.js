@@ -102,7 +102,12 @@ let test = function(next){
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
 let getExits = function(next){
-    query("g.v('id',roomid).outE()",{roomid:world.playerCurrentRoomID},results=>next(results));
+    query("g.v('id',roomid).outE().where(inV().has('label','room'))",{roomid:world.playerCurrentRoomID},results=>next(results));
+};
+
+//This retuns the 'out edges' from the players current room. An out edge represents a door.
+let getItems = function(next){
+    query("g.v('id',roomid).outE().where(has('label','holds')).inV()",{roomid:world.playerCurrentRoomID},results=>next(results));
 };
 
 debug("[Graph connection established]");
@@ -234,6 +239,21 @@ let describe = function(rooms){
     console.log("The void looks back into you");
 };
 
+//This described items.
+let describe_items = function(items){
+    if(items.length){
+        items.forEach(item=>{
+            if(item.properties){
+                //this line makes a massive assumption the item was set up right.
+                //Yes, it could be refactored. But I am not going to right now because it works.  
+                desc(`  ${item.properties.name[0].value.white}: ${item.properties.description[0].value.grey}`)
+            } else {
+                desc(`This item has no name and is indescribable!`);
+            }
+        });
+    }
+}
+
 //The top level action function for describing what the player sees
 let look = function(next){
     process.stdout.write("Looking ... ".green);
@@ -241,9 +261,17 @@ let look = function(next){
     query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
         describe(rooms);
         //When have a generic describer, should push this function down
-        getExits((results)=>{
-            desc(`There are exits to the${results.map((e)=>{return " " + e.label.white}).join()}`);
-            next();
+        getExits((doors)=>{
+            desc(`There are exits to the${doors.map((e)=>{return " " + e.label.white}).join()}`);
+            getItems((items)=>{
+                if(items.length){
+                    desc(`You also see ${items.length} item(s)`);
+                    describe_items(items);
+                } else {
+                    desc(`There is nothing else to see`);
+                }
+                next();
+            });
         });
     });
 };
