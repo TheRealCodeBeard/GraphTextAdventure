@@ -16,6 +16,12 @@ Done:
 [o] Moving Items (take, hold, drop)
 
 Working on:
+[ ] Items - Limiting what a player can carry
+[ ] Items - Bags.
+    [ ] Hold extra ... i.e. bag holds 2
+    [ ] Moving in and out of bags (drops on floor)
+    [ ] Look 'at' item - describe it.
+    [ ] Look 'in' bag.
 
 To Do:
 [ ] Connecting two rooms wich already exist.
