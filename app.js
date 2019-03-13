@@ -110,6 +110,10 @@ let getItems = function(next){
     query("g.v('id',roomid).outE().where(has('label','holds')).inV()",{roomid:world.playerCurrentRoomID},results=>next(results));
 };
 
+let getPlayerItems = function(next){
+    query("g.v('id',playerid).outE().where(has('label','holds')).inV()",{playerid:world.playerNodeID},results=>next(results));
+};
+
 debug("[Graph connection established]");
 
 //Readline wraps in/out streams nicely and takes away hastle
@@ -252,7 +256,7 @@ let describe_items = function(items){
             }
         });
     }
-}
+};
 
 //The top level action function for describing what the player sees
 let look = function(next){
@@ -273,6 +277,87 @@ let look = function(next){
                 next();
             });
         });
+    });
+};
+
+//Describe what the player holds
+let inventory = function(next){
+    getPlayerItems(items=>{
+        if(items.length){
+            desc(`You have ${items.length} items`);
+            describe_items(items);
+        } else {
+            desc(`You don't have anything.`);
+        }
+        next();
+    });
+};
+
+//This detaches the item from the room and attaches it to the player.
+let take = function(words,next){
+    let desired = words[1];
+    debug(`you want the '${desired}'`);
+    getItems(items=>{
+        if(items.length){
+            let found = items.filter(e=>(e.properties.name[0].value===desired));
+            if(found.length===1){
+                let item = found[0];
+                debug(JSON.stringify(item.id));
+                info(`You reach out for the '${item.properties.name[0].value}'`);
+                query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
+                    {itemid:item.id},
+                    (results)=>{
+                        info(`You grasp the '${item.properties.name[0].value}'`);
+                        query("g.v('id',playerId).addE('holds').to(g.v('id',itemid))",
+                            {playerId:world.playerNodeID,itemid:item.id},
+                            (results)=>{
+                                info(`The '${item.properties.name[0].value}' is now yours!`);
+                                next();
+                            }
+                        );
+                    });
+            } else {
+                info(`There there is no '${desired}'`);
+                next();//next here to prevent 'fall through'
+            }
+        } else {
+            info(`There are no items here so you can't take '${desired}'`);
+            next();//next here to prevent 'fall through'
+        }
+    });
+};
+
+//This detaches the item from the player and attaches it to the room. Dedupe with above?
+let drop = function(words,next){
+    let desired = words[1];
+    debug(`you want to drop the '${desired}'`);
+    getPlayerItems(items=>{
+        if(items.length){
+            let found = items.filter(e=>(e.properties.name[0].value===desired));
+            if(found.length===1){
+                let item = found[0];
+                debug(JSON.stringify(item.id));
+                info(`You hold '${item.properties.name[0].value}' in front of you and let go.`);
+                query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
+                    {itemid:item.id},
+                    (results)=>{
+                        info(`The '${item.properties.name[0].value}' falls`);
+                        query("g.v('id',playerRoomId).addE('holds').to(g.v('id',itemid))",
+                            {playerRoomId:world.playerCurrentRoomID,itemid:item.id},
+                            (results)=>{
+                                info(`The '${item.properties.name[0].value}' is now now in the room!`);
+                                next();
+                            }
+                        );
+                    });
+            } else {
+                info(`You don't have '${desired}' to drop.`);
+                next();//next here to prevent 'fall through'
+            }
+        } else {
+            info(`You aren't holding anything so cannot drop the '${desired}'.`);
+            next();//next here to prevent 'fall through'
+        }
     });
 };
 
@@ -320,12 +405,21 @@ let act = function(command, next){
         case "look": 
             look(next);
             break;
+        case "inventory":
+            inventory(next);
+            break;
         case "make":
             make(words,next);
             break;
         case "go":
         case "walk":
             walk(words,next);
+            break;
+        case "take":
+            take(words,next);
+            break;
+        case "drop":
+            drop(words,next);
             break;
         case "describe:":
             add_description(words,next);
