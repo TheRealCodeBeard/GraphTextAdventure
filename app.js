@@ -133,45 +133,67 @@ let world = {
 /* 
    WORLD BUILDER ACTION FUNCTIONS
 */
+
+let make_room = function(words,next){
+    let direction = words[3];
+    if(world.possibleDirections[direction]){
+        info("Checking...");
+        getExits((rooms)=>{
+            if(rooms.some(r=>r.label===direction)){
+                info(`There is already a room to the ${direction.white}.`);
+                info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
+                next();
+            } else {
+                info(`OK. Building Room to the ${direction.white}...`);
+                let opposite = world.possibleDirections[direction];
+                debug(`Return door to: ${opposite}.`);
+                query("g.addV('room').property('made','node app').addE(opp).to(g.V('id',playerRoomId))",
+                    {opp:opposite, playerRoomId:world.playerCurrentRoomID},
+                    (newEdges)=>{
+                        info(`Connecting door to current room...`);
+                        query("g.V('id',playerRoomId).addE(dir).to(g.V('id',newRoomId))",
+                        {playerRoomId:world.playerCurrentRoomID,dir:direction,newRoomId:newEdges[0].outV},
+                        (result)=>{
+                            info(`Connected door to current room`);
+                            next();
+                        });
+                    }
+                );
+            }
+        });
+    } else {
+        info(`You can't make a room to the ${direction.white}.`);
+        info(`Only 'north, south, east and west' are currently allowed.`);
+        next();
+    } 
+};
+
+let make_item = function(words,next){
+    let item = words[2];
+    let desc = words.slice(3).join(" ");
+    debug(`Making a(n) '${item}': '${desc}'`);
+    query("g.addV('item').property('made','node app').property('description',description).property('name',name).addE('holds').from(g.V('id',playerRoomId))",
+        {playerRoomId:world.playerCurrentRoomID,description:desc,name:item},
+        (result)=>{
+            info(`item '${item}' made`)
+            next();
+        });
+};
+
 //This is the function that 'makes' things. It will make rooms first and then other things.
 //This would not be in the 'normal player' interface, but in the world builder interface
 let make = function(words,next){
     if(words.length===4 && words[1]==='room' && words[2]==='to'){
-        let direction = words[3];
-        if(world.possibleDirections[direction]){
-            info("Checking...");
-            getExits((rooms)=>{
-                if(rooms.some(r=>r.label===direction)){
-                    info(`There is already a room to the ${direction.white}.`);
-                    info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
-                    next();
-                } else {
-                    info(`OK. Building Room to the ${direction.white}...`);
-                    let opposite = world.possibleDirections[direction];
-                    debug(`Return door to: ${opposite}.`);
-                    query("g.addV('room').property('made','node app').addE(opp).to(g.V('id',playerRoomId))",
-                        {opp:opposite, playerRoomId:world.playerCurrentRoomID},
-                        (newEdges)=>{
-                            info(`Connecting door to current room...`);
-                            query("g.V('id',playerRoomId).addE(dir).to(g.V('id',newRoomId))",
-                            {playerRoomId:world.playerCurrentRoomID,dir:direction,newRoomId:newEdges[0].outV},
-                            (result)=>{
-                                info(`Connected door to current room`);
-                                next();
-                            });
-                        }
-                    );
-                }
-            });
-        } else {
-            info(`You can't make a room to the ${direction.white}.`);
-            info(`Only 'north, south, east and west' are currently allowed.`);
-            next();
-        }     
+        make_room(words,next);
+    } else if(words.length>=4 && words[1]==='item'){
+        make_item(words,next);
     } else {
         info("The syntax for the make command is: "+ "make [room] to [direction].".white);
         info("If a [room] already exists to the [direction] the command will fail.");
         info("To add a description you will need to [walk] to the [direction] to enter the room.");
+        info("");
+        info("For an item it the syntax is: "+ "make [item] name description".white);
+        info("The item will be dropped in the room you make it in");
         next();
     }
 };
