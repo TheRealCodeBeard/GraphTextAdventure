@@ -13,3 +13,6 @@ You will need your own 'config.js' file. Copy 'config_template.js' and call it '
 # running
 When you have set it all up you will need to make sure you have the right modules installed as detailed at the begining of app.js.
 Run with node app.js as you would expect.
+
+# The Server
+Running ```node server.js``` will give you a localhost:3000 page that will display the current graph in your graph. It will also show the items that the player is holding. This needs to be running if you want to use ```inventory api``` instead of just ```inventory```
