@@ -47,6 +47,7 @@ const fs = require('fs');//used to write graph dumps while testing visualisation
 const gremlin = require('gremlin');//npm install gremlin
 const readline = require('readline');//npm install readline
 const colors = require('colors');//npm install colors
+const http = require('http');
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
 const gwr = require("./gremlin_wrapper.js");
 const query = gwr.query;
@@ -64,7 +65,7 @@ let desc = function(text){ console.log(text.cyan); };
 
 let test = function(next){
     //A place to test stuff. 
-    error('No test code currently live');
+    error('No test code currently live')
     next();
 };
 
@@ -248,17 +249,37 @@ let look = function(next){
     });
 };
 
-//Describe what the player holds
-let inventory = function(next){
-    getPlayerItems(items=>{
-        if(items.length){
+
+let inventory_api = function(next){
+    let base_url = "http://localhost:3000"
+    debug('Using API to get Player Inventory');
+    http.get(`${base_url}/api/items/player/${world.playerNodeID}`,resp=>{
+        let data = '';
+        resp.on('data',chunk=>data +=chunk);
+        resp.on('end',()=>{
+            let items = JSON.parse(data);
             desc(`You have ${items.length} items`);
-            describe_items(items);
-        } else {
-            desc(`You don't have anything.`);
-        }
-        next();
+            items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
+            next();
+        });
     });
+};
+
+//Describe what the player holds
+let inventory = function(words,next){
+    if(words.length>1 && words[1]==="api"){//this one we will look via the API
+        inventory_api(next);
+    } else { //this is the standard call
+        getPlayerItems(items=>{
+            if(items.length){
+                desc(`You have ${items.length} items`);
+                describe_items(items);
+            } else {
+                desc(`You don't have anything.`);
+            }
+            next();
+        });
+    }
 };
 
 //This detaches the item from the room and attaches it to the player.
@@ -374,7 +395,7 @@ let act = function(command, next){
             look(next);
             break;
         case "inventory":
-            inventory(next);
+            inventory(words,next);
             break;
         case "make":
             make(words,next);
