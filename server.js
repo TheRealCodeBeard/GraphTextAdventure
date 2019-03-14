@@ -13,4 +13,10 @@ app.get('/api/current',(req, res) => {
     });
 });
 
+app.get('/api/items/player/:id',(req,res)=>{
+    gwr.items_held_by(req.params.id,(items)=>{
+        res.send(items.map(gwr.item_vector_to_object));
+    });
+});
+
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

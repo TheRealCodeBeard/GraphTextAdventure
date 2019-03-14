@@ -1,6 +1,9 @@
 <html>
     <head>
         <style type="text/css">
+            body {
+                font-family: sans-serif;
+            }
             #cy {
                 width: 900px;
                 height: 600px;
@@ -10,12 +13,24 @@
             #loading {
                 font-size: 12px;
             }
+            .item span {
+                font-size:12px;
+                padding:10px;
+                margin:1px;
+                color: black;
+                background-color: aliceblue;
+                border:solid 1px black;
+                min-width: 100px;
+                display: inline-block;
+            }
         </style>
         <script src="./jslib/cytoscape.min.js"></script>
         <script src="./jslib/page.js"></script>
     </head>
     <body onload="go()">
-        <h1>Graph <span id="loading"></span></h1>
+        <h1>Current Map <span id="loading"></span></h1>
         <div id="cy"></div>
+        <h2>The Player Holds</h2>
+        <div id="items"></div>
     </body>
 </html>

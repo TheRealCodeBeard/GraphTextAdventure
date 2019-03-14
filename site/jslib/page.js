@@ -55,8 +55,21 @@ let resplafunt = function(data){
    return the_data;
 };
 
+let load_player_items = function(){
+    let it = document.getElementById('items');
+    it.innerHTML="Loading items..."
+    let playerid = '8bf55d9c-ff0e-4fd6-9846-817dcb483392';//Currently this is a fixed node idea. It should be passed ... obvs
+    fetch('./api/items/player/'+playerid)
+        .then(response=>response.json())
+        .then(data=>data.map(i=>'<div class="item"><span>'+i.name+"</span><span>"+i.description+"</span>"))
+        .then(html=>{
+            it.innerHTML = html;
+        });
+};
+
 let go = function(){
-    document.getElementById('loading').innerHTML="Loading";
+    let lod = document.getElementById('loading');
+    lod.innerHTML="Loading";
     fetch('./api/current')
         .then(response=>response.json())
         .then(data=>{
@@ -66,6 +79,7 @@ let go = function(){
                 style: graph_style,
                 layout: graph_layout
             });
-            document.getElementById('loading').innerHTML="";
-        });    
-};
+            lod.innerHTML="";
+        })
+        .then(load_player_items);
+}; 

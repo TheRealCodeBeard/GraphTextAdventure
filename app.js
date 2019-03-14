@@ -14,17 +14,19 @@ Done:
 [o] Drawing the map - simple version done
 [o] Items in the world
 [o] Moving Items (take, hold, drop)
+[o] Webserver stuff. 
+    [o] Webserver version of graph vis
+    [o] Need to make this app use the gremlin_wrapper.js
 
 Working on:
-[ ] Webserver stuff. Need to make this app use the gremlin_wrapper.js
+
+To Do:
 [ ] Items - Limiting what a player can carry
 [ ] Items - Bags.
     [ ] Hold extra ... i.e. bag holds 2
     [ ] Moving in and out of bags (drops on floor)
     [ ] Look 'at' item - describe it.
     [ ] Look 'in' bag.
-
-To Do:
 [ ] Connecting two rooms wich already exist.
 [ ] Generic describer
 [ ] Golem that moves with seperate function (or Azure functions call)
@@ -46,18 +48,8 @@ const gremlin = require('gremlin');//npm install gremlin
 const readline = require('readline');//npm install readline
 const colors = require('colors');//npm install colors
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
-
-//Creates a client and tests the connection to Cosmos DB.
-const gremlinClient = gremlin.createClient(
-    config.port, //usually 443
-    config.endpoint, 
-    { 
-        "session": false, 
-        "ssl": true, 
-        "user": `/dbs/${config.database}/colls/${config.collection}`,
-        "password": config.primaryKey
-    }
-);
+const gwr = require("./gremlin_wrapper.js");
+const query = gwr.query;
 
 //Write to the console in the debug colour.
 let debug = function(text){ console.log(text.grey); };
@@ -70,41 +62,10 @@ let desc = function(text){ console.log(text.cyan); };
    UTILITY FUNCTIONS
 */
 
-//This function wraps a standard call to cosmos and outputs any errors calling 'next' with query result. 
-let query = function(query,parameters,next){
-    //debug(query);
-    gremlinClient.execute(query,parameters,(err,results)=> {
-        if (err)  error(`Error: ${err}`);
-        else next(results);
-    }); 
-};
-
-//writes out a file of nodes then edges
-let dump_whole_graph = function(next){
-    query("g.V().map(values('id','label','description').fold())",null,(node_results)=>{
-        nodes = JSON.stringify(node_results);
-        query("g.E()",null,(edge_results)=>{
-            edges = JSON.stringify(edge_results);
-            output = `let graph_data_actual = {nodes:${nodes},edges:${edges}};`
-            fs.writeFile("./site/data/actual_cosmos.js", output, function(err) {
-                if(err) {return error(err);}
-                else {debug("graph output!");}
-                next();
-            }); 
-        });
-    });
-};
-
 let test = function(next){
     //A place to test stuff. 
     error('No test code currently live');
     next();
-    /*
-    query("g.v('id',playerid).outE()",{playerid:world.playerNodeID},(results)=>{
-        debug(JSON.stringify(results));
-        next();
-    });
-    */
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
@@ -441,9 +402,6 @@ let act = function(command, next){
             break;
         case "test":
             test(next);
-            break;
-        case "dump":
-            dump_whole_graph(next);
             break;
         default:
             info("What?");
