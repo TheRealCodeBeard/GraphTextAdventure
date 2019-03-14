@@ -7,15 +7,15 @@
                 display: block;
                 border:solid 1px black;
             }
+            #loading {
+                font-size: 12px;
+            }
         </style>
         <script src="./jslib/cytoscape.min.js"></script>
-        <script src="./data/sample_data_hand.js"></script>
-        <script src="./data/actual_cosmos.js"></script>
         <script src="./jslib/page.js"></script>
     </head>
     <body onload="go()">
-        <h1>Graph</h1>
+        <h1>Graph <span id="loading"></span></h1>
         <div id="cy"></div>
-        
     </body>
 </html>

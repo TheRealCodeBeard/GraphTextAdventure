@@ -16,6 +16,7 @@ Done:
 [o] Moving Items (take, hold, drop)
 
 Working on:
+[ ] Webserver stuff. Need to make this app use the gremlin_wrapper.js
 [ ] Items - Limiting what a player can carry
 [ ] Items - Bags.
     [ ] Hold extra ... i.e. bag holds 2
@@ -85,7 +86,7 @@ let dump_whole_graph = function(next){
         query("g.E()",null,(edge_results)=>{
             edges = JSON.stringify(edge_results);
             output = `let graph_data_actual = {nodes:${nodes},edges:${edges}};`
-            fs.writeFile("./data/actual_cosmos.js", output, function(err) {
+            fs.writeFile("./site/data/actual_cosmos.js", output, function(err) {
                 if(err) {return error(err);}
                 else {debug("graph output!");}
                 next();
