@@ -16,7 +16,7 @@ const gremlinClient = gremlin.createClient(
 //This function wraps a standard call to cosmos and outputs any errors calling 'next' with query result. 
 let gremlin_query = function(query,parameters,next){
     gremlinClient.execute(query,parameters,(err,results)=> {
-        if (err)  error(`Error: ${err}`);
+        if (err)  console.log(`Error: ${err}`);
         else next(results);
     }); 
 };
@@ -34,7 +34,15 @@ let return_current_graph = function(next){
 };
 
 let get_items_attached_to = function(vectorid,next){
-    gremlin_query("g.v('id',vectorid).outE().where(has('label','holds')).inV()",{vectorid:vectorid},results=>next(results));
+    gremlin_query("g.v('id',vectorid).outE().where(has('label','holds')).inV()",{vectorid:vectorid},next);
+};
+
+let get_all_items = function(next){
+    gremlin_query("g.v().where(has('label','item'))",null,next);
+};
+
+let vector_in = function(vectorid,next){
+    gremlin_query("g.v('id',vectorid).outE().where(has('label','in')).inV()",{vectorid:vectorid},next);
 };
 
 let reformat_item_vector = function(item){
@@ -44,9 +52,20 @@ let reformat_item_vector = function(item){
     };
 };
 
+let reformat_room_vector = function(room){
+    return {
+        id:room.id,
+        type:room.label,
+        description:room.properties.description[0].value
+    };
+};
+
 module.exports = {
     return_current:return_current_graph,
     items_held_by:get_items_attached_to,
+    items_all:get_all_items,
     item_vector_to_object:reformat_item_vector,
+    room_vector_to_object:reformat_room_vector,
+    in_room:vector_in,
     query:gremlin_query
 };

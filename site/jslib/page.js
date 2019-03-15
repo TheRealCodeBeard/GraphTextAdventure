@@ -55,15 +55,37 @@ let resplafunt = function(data){
    return the_data;
 };
 
+const playerid = '8bf55d9c-ff0e-4fd6-9846-817dcb483392';//Currently this is a fixed node idea. It should be passed ... obvs
+
+let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
+
 let load_player_items = function(){
-    let it = document.getElementById('items');
+    let it = document.getElementById('player_items');
     it.innerHTML="Loading items..."
-    let playerid = '8bf55d9c-ff0e-4fd6-9846-817dcb483392';//Currently this is a fixed node idea. It should be passed ... obvs
-    fetch('./api/items/player/'+playerid)
+        fetch('./api/items/player/'+playerid)
         .then(response=>response.json())
-        .then(data=>data.map(i=>'<div class="item"><span>'+i.name+"</span><span>"+i.description+"</span>"))
-        .then(html=>{
-            it.innerHTML = html;
+        .then(data=>it.innerHTML = data.map(item_to_html))
+};
+
+let load_player_room_items = function(){
+    let r = document.getElementById('player_room');
+    r.innerHTML="Loading room..."
+    let rit = document.getElementById('room_items');
+    rit.innerHTML="Loading items..."
+    fetch('./api/player/'+playerid+"/room")
+        .then(response=>response.json())
+        .then(data=>{
+            let room = data[0];//assumptions, player can be in one room only
+            r.innerHTML = room.description;
+            return room.id;
+        })
+        .then(id=>{
+            return fetch('./api/items/room/'+id)
+            .then(response=>response.json())
+            .then(data=>{
+                if(data.length>0) rit.innerHTML = data.map(item_to_html)
+                else rit.innerHTML = "Nothing"
+            })
         });
 };
 
@@ -81,5 +103,6 @@ let go = function(){
             });
             lod.innerHTML="";
         })
-        .then(load_player_items);
+        .then(load_player_items)
+        .then(load_player_room_items);
 }; 

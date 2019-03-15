@@ -19,4 +19,22 @@ app.get('/api/items/player/:id',(req,res)=>{
     });
 });
 
+app.get('/api/items',(req,res)=>{
+    gwr.items_all((items)=>{
+        res.send(items.map(gwr.item_vector_to_object));
+    });
+});
+
+app.get('/api/items/room/:id', (req,res)=>{
+    gwr.items_held_by(req.params.id,(items)=>{
+        res.send(items.map(gwr.item_vector_to_object));
+    })
+});
+
+app.get('/api/player/:id/room',(req,res)=>{
+    gwr.in_room(req.params.id,(rooms)=>{
+        res.send(rooms.map(gwr.room_vector_to_object));
+    })
+});
+
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
