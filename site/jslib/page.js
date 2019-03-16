@@ -59,8 +59,28 @@ let playerid = '';
 
 let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
 
+let hidePlayerList = function(){
+    document.getElementById('player_list').style.display="none";
+};
+
+let set_player = function(guid){
+    document.getElementById('player_guid').value = guid;
+    player_load();
+};
+
+let load_players = function(){
+    let ps = document.getElementById('player_list');
+    ps.innerHTML="Loading...";
+    fetch('./api/players')
+        .then(response=>response.json())
+        .then(data=>{
+            ps.innerHTML = data.map((player)=>'<div class="item"><span onclick="set_player(\''+player.id+'\')">'+player.id+"</span><span>"+player.name+"</span>");
+        });
+};
+
 let player_load = function(){
     playerid = document.getElementById('player_guid').value;
+    document.getElementById("player_information").style.display="block";
     load_player_items();
     load_player_room_items();
 };
@@ -78,7 +98,7 @@ let load_player_room_items = function(){
     r.innerHTML="Loading room..."
     let rit = document.getElementById('room_items');
     rit.innerHTML="Loading items..."
-    fetch('./api/player/'+playerid+"/room")
+    fetch('./api/players/'+playerid+"/room")
         .then(response=>response.json())
         .then(data=>{
             let room = data[0];//assumptions, player can be in one room only
@@ -108,5 +128,6 @@ let go = function(){
                 layout: graph_layout
             });
             lod.innerHTML="";
-        });
+        })
+        .then(load_players);
 }; 

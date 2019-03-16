@@ -31,16 +31,22 @@ app.get('/api/items/room/:id', (req,res)=>{
     })
 });
 
-app.get('/api/player/:id/room',(req,res)=>{
+app.get('/api/players/:id/room',(req,res)=>{
     gwr.in_room(req.params.id,(rooms)=>{
         res.send(rooms.map(gwr.room_vector_to_object));
     })
 });
 
-app.get('/api/player/:id',(req,res)=>{
+app.get('/api/players/:id',(req,res)=>{
     gwr.get_player_vector(req.params.id,(vectors)=>{
         res.send(vectors.map(gwr.player_vector_to_object));
     })
+});
+
+app.get('/api/players', (req,res)=>{
+    gwr.players_all((players)=>{
+        res.send(players.map(gwr.player_vector_to_object));
+    });
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

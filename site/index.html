@@ -23,6 +23,15 @@
                 min-width: 100px;
                 display: inline-block;
             }
+            #player_information {
+                display:none;
+            }
+            h3, h2 {
+                font-size:12px;
+                background-color: black;
+                color: white;
+                padding:1px;
+            }
         </style>
         <script src="./jslib/cytoscape.min.js"></script>
         <script src="./jslib/page.js"></script>
@@ -30,6 +39,9 @@
     <body onload="go()">
         <h1>Current Map <span id="loading"></span></h1>
         <div id="cy"></div>
+        <h2 onclick="hidePlayerList()">Players</h2>
+        <div id="player_list"></div>
+        <div></div>
         <h2>Player</h2>
         <span>Put your player guid in this box</span> <input id="player_guid" type="text"><button onclick="player_load()">Load Player</button>
         <div id="player_information">
