@@ -1,0 +1,24 @@
+{
+  "name": "graph-text-adventure",
+  "version": "0.0.1",
+  "description": "Graph DB backed text adventure",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheRealCodeBeard/GraphTextAdventure.git"
+  },
+  "author": "Phil Harvey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheRealCodeBeard/GraphTextAdventure/issues"
+  },
+  "homepage": "https://github.com/TheRealCodeBeard/GraphTextAdventure#readme",
+  "dependencies": {
+    "colors": "^1.3.3",
+    "gremlin": "2.7.0",
+    "readline": "^1.3.0"
+  }
+}
