@@ -1,40 +1,4 @@
 /*
-Done:
-[o] Split config out to seperate file as per example
-[o] GitIgnore Config file
-[o] Create template config file with notes on creation
-[o] Comments
-[o] Get code into GitHub
-[o] Colors!
-[o] Get room builing to work (doors back and forth) - limited for now
-[o] Refactors based on Tim S feedback
-[o] Prove that Parameterised queries work
-[o] Update to parameterised queries 
-[o] LET vs VAR refactors
-[o] Drawing the map - simple version done
-[o] Items in the world
-[o] Moving Items (take, hold, drop)
-[o] Webserver stuff. 
-    [o] Webserver version of graph vis
-    [o] Need to make this app use the gremlin_wrapper.js
-
-Working on:
-
-To Do:
-[ ] Items - Limiting what a player can carry
-[ ] Items - Bags.
-    [ ] Hold extra ... i.e. bag holds 2
-    [ ] Moving in and out of bags (drops on floor)
-    [ ] Look 'at' item - describe it.
-    [ ] Look 'in' bag.
-[ ] Connecting two rooms wich already exist.
-[ ] Generic describer
-[ ] Golem that moves with seperate function (or Azure functions call)
-[ ] Investigate making drop/attach one query - a transaction? Stored Procedure?
-[ ] Seperate 'text strings' out into a config file.
-*/
-
-/*
     This is a console text adventure using Cosmos DB Graph through Gremlin as full state back end.
     This code is presented 'as is' with no licence or warrenty of any kind - purely for demonstration purposes. 
     Use at your own risk.
@@ -49,7 +13,7 @@ const readline = require('readline');//npm install readline
 const colors = require('colors');//npm install colors
 const http = require('http');
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
-const gwr = require("./gremlin_wrapper.js");
+const gwr = require("./shared/lib/gremlin_wrapper.js");
 const query = gwr.query;
 
 //Write to the console in the debug colour.
