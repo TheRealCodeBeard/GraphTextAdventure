@@ -23,6 +23,8 @@ let game = function(text){ console.log(text.green); };
 let info = function(text){ console.log(text.yellow); };
 let desc = function(text){ console.log(text.cyan); };
 
+let use_api = false;
+
 /* 
    UTILITY FUNCTIONS
 */
@@ -30,6 +32,19 @@ let desc = function(text){ console.log(text.cyan); };
 let test = function(next){
     //A place to test stuff. 
     error('No test code currently live')
+    next();
+};
+
+let engine = function(words,next){
+    if(words.length===2 && words[1]==='api'){
+        use_api = true;
+        debug("Using API Engine");
+    } else if (words.length===2 && words[1]==='local'){
+        use_api = false;
+        debug("Using Local Engine");
+    } else {
+        error("Only options are 'engine: api' or 'engine: local'");
+    }
     next();
 };
 
@@ -390,6 +405,9 @@ let act = function(command, next){
             break;
         case "test":
             test(next);
+            break;
+        case "engine:":
+            engine(words,next);
             break;
         default:
             info("What?");
