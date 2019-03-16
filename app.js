@@ -163,7 +163,7 @@ let add_description = function(words,next){
         {playerRoomId:world.playerCurrentRoomID,desc:description},
         (results)=>{
             debug("Description added to room");
-            look(next);        
+            look(null,next);        
         }
     );
 };
@@ -172,6 +172,7 @@ let add_description = function(words,next){
    STANDARD ACTION FUNCTIONS
 */
 
+//This method respects the engine flab but also any user given overrides
 let api_switch = function(words,api,local,next){
     if(words.length>1 && words[1]==="api") api(next);
     else if(words.length>1 && words[1]==="local") local(next);
@@ -212,7 +213,16 @@ let describe_items = function(items){
     }
 };
 
+//the wrapper method for calling the API based engine
+let call_api = function(call,next){
+    http.get(call,resp=>{
+        let data = '';
+        resp.on('data',chunk=>data +=chunk);
+        resp.on('end',()=>next(JSON.parse(data)));
+    });
+};
 
+//Describe what the player holds methods
 let inventory_local = function(next){
     getPlayerItems(items=>{
         if(items.length){
@@ -226,24 +236,14 @@ let inventory_local = function(next){
 };
 
 let inventory_api = function(next){
-    let base_url = "http://localhost:3000"
-    http.get(`${base_url}/api/items/player/${world.playerNodeID}`,resp=>{
-        let data = '';
-        resp.on('data',chunk=>data +=chunk);
-        resp.on('end',()=>{
-            let items = JSON.parse(data);
-            desc(`You have ${items.length} items`);
-            items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
-            next();
-        });
+    call_api(`${config.baseURL}/api/items/player/${world.playerNodeID}`,(items)=>{
+        desc(`You have ${items.length} item(s)`);
+        items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
+        next();
     });
 };
 
-//Describe what the player holds
-let inventory = function(words,next){
-    api_switch(words,inventory_api,inventory_local,next);
-};
-
+//looking about methods
 let look_local = function(next){
     process.stdout.write("Looking ... ".green);
     //Only does current room and exists so far, but should do items in rooms too
@@ -266,14 +266,24 @@ let look_local = function(next){
 };
 
 let look_api = function(next){
-    error('Not implemented');
-    next();
+    call_api(`${config.baseURL}/api/players/${world.playerNodeID}/look`,(result)=>{
+        result.locations.forEach(location=>desc(location.description));
+        if(result.doors && result.doors.length){
+            desc(`There are ${result.doors.length} door(s) to the`.grey);
+            desc(`  ${result.doors.map(d=>d.name).join(", ").white}`);
+        } else desc('There is no way out!'.grey);
+        if(result.items && result.items.length){
+            desc(`You also see ${result.items.length} item(s)`.grey);
+            result.items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
+        } else desc("You don't see any items.".grey);
+        if(result.agents && result.agents.length){
+            desc(`You also see ${result.agents.length} figures(s)`.grey);
+            result.agents.forEach(agent=>desc(`  ${agent.name.white}: ${agent.description.grey}`));
+        } else desc("You are alone in this room.".grey);
+        next();
+    });
 };
 
-//The top level action function for describing what the player sees
-let look = function(words,next){
-    api_switch(words,look_api,look_local,next);
-};
 
 //This detaches the item from the room and attaches it to the player.
 let take = function(words,next){
@@ -365,7 +375,7 @@ let walk = function(words,next){
                             (results)=>{
                                 world.playerCurrentRoomID = chosen[0].inV;//Update state
                                 game(" arrived!]");
-                                look(next);//Give the standard description of the new room.
+                                look(null,next);//Give the standard description of the new room.
                         });
                 });
             } else {//Feedback if the user has made a mistake
@@ -385,10 +395,10 @@ let act = function(command, next){
     let words = command.split(" ");
     switch(words[0]) {
         case "look": 
-            look(words,next);
+            api_switch(words,look_api,look_local,next);
             break;
         case "inventory":
-            inventory(words,next);
+            api_switch(words,inventory_api,inventory_local,next);
             break;
         case "make":
             make(words,next);
