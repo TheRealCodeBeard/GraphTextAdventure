@@ -379,6 +379,7 @@ let act = function(command, next){
             break;
         case "who":
             info(`You are: '${world.playerNodeID}'`);
+            info(`Your name is: '${world.playerName}'`);
             next();
             break;
         case "where":
@@ -406,7 +407,8 @@ let setup_player = function(next){
         (results)=>{
             if(results.length===1){
                 world.playerNodeID = results[0].id;
-                debug(`Player ID: ${world.playerNodeID}]`);
+                world.playerName = results[0].properties.name[0].value;
+                debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
             } else {
                 error("\t[Too many player nodes with id in config.]");
             }
