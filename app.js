@@ -401,17 +401,17 @@ let act = function(command, next){
 //Gets the player node id from the graph
 let setup_player = function(next){
     process.stdout.write("\t[Player ... ".grey);
-    //Would need to change this for multiple players. 
-    //Collect player name from user and connect to that node.
-    query("g.V().has('label','player')",{},(results)=>{
-        if(results.length===1){
-            world.playerNodeID = results[0].id;
-            debug(`Player ID: ${world.playerNodeID}]`);
-        } else {
-            error("\t[Too many player nodes.]");
-        }
-        next();
-    });
+    query("g.V('id',playerVectorID)",
+        {playerVectorID:config.playerVectorID},//you are identified by your config file currently
+        (results)=>{
+            if(results.length===1){
+                world.playerNodeID = results[0].id;
+                debug(`Player ID: ${world.playerNodeID}]`);
+            } else {
+                error("\t[Too many player nodes with id in config.]");
+            }
+            next();
+        });
 };
 
 //Collect the current room ID from the user in the graph
