@@ -350,6 +350,8 @@ let walk = function(words,next){
     }
 };
 
+
+
 //This is the main 'parser' that turns a user input into the function call.
 //Very very basic. Would be better as a bot.
 let act = function(command, next){
@@ -399,6 +401,19 @@ let act = function(command, next){
    SET UP FUNCTIONS
 */
 
+//Creates a player in a room if the player doesn't exist
+let bootstrap = function(next){
+    world.playerName = "First Player (for testing)";
+    query("g.addV('player').property('name',playerName).addE('in').to(g.addV('room'))",
+        {playerName:world.playerName},
+        (newEdges)=>{
+            world.playerNodeID = newEdges[0].outV;
+            info(`Your player ID is: '${ world.playerNodeID}' put this in config.js as 'config.playerVectorID'`);
+            debug(`new room '${newEdges[0].inV}'`)
+            next();
+        });
+};
+
 //Gets the player node id from the graph
 let setup_player = function(next){
     process.stdout.write("\t[Player ... ".grey);
@@ -409,10 +424,15 @@ let setup_player = function(next){
                 world.playerNodeID = results[0].id;
                 world.playerName = results[0].properties.name[0].value;
                 debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
+                next();
+            } else if (results.length===0){
+                error("You have no players!");
+                debug("I will create one for you. When I am done, I will give you the ID to put in your config");
+                bootstrap(next);
             } else {
                 error("\t[Too many player nodes with id in config.]");
+                next();
             }
-            next();
         });
 };
 
