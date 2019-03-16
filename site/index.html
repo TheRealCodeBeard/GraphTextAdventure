@@ -23,6 +23,10 @@
                 min-width: 100px;
                 display: inline-block;
             }
+            #player_list .item span:first-child:hover{
+                font-style: italic;
+                cursor: pointer;
+            }
             #player_information {
                 display:none;
             }
@@ -41,10 +45,8 @@
         <div id="cy"></div>
         <h2 onclick="hidePlayerList()">Players</h2>
         <div id="player_list"></div>
-        <div></div>
-        <h2>Player</h2>
-        <span>Put your player guid in this box</span> <input id="player_guid" type="text"><button onclick="player_load()">Load Player</button>
         <div id="player_information">
+            <h2>Player: <span id="player_guid"></span></h2>
             <h3>The Player Holds</h3>
             <div id="player_items"></div>
             <h3>Player is in this Room</h3>

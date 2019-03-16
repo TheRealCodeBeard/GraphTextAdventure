@@ -55,8 +55,6 @@ let resplafunt = function(data){
    return the_data;
 };
 
-let playerid = '';
-
 let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
 
 let hidePlayerList = function(){
@@ -64,8 +62,10 @@ let hidePlayerList = function(){
 };
 
 let set_player = function(guid){
-    document.getElementById('player_guid').value = guid;
-    player_load();
+    document.getElementById('player_guid').innerHTML = guid;
+    document.getElementById("player_information").style.display="block";
+    load_player_items(guid);
+    load_player_room_items(guid);
 };
 
 let load_players = function(){
@@ -78,27 +78,21 @@ let load_players = function(){
         });
 };
 
-let player_load = function(){
-    playerid = document.getElementById('player_guid').value;
-    document.getElementById("player_information").style.display="block";
-    load_player_items();
-    load_player_room_items();
-};
 
-let load_player_items = function(){
+let load_player_items = function(guid){
     let it = document.getElementById('player_items');
     it.innerHTML="Loading items..."
-        fetch('./api/items/player/'+playerid)
+        fetch('./api/items/player/'+guid)
         .then(response=>response.json())
         .then(data=>it.innerHTML = data.map(item_to_html))
 };
 
-let load_player_room_items = function(){
+let load_player_room_items = function(guid){
     let r = document.getElementById('player_room');
     r.innerHTML="Loading room..."
     let rit = document.getElementById('room_items');
     rit.innerHTML="Loading items..."
-    fetch('./api/players/'+playerid+"/room")
+    fetch('./api/players/'+guid+"/room")
         .then(response=>response.json())
         .then(data=>{
             let room = data[0];//assumptions, player can be in one room only
