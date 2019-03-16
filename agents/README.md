@@ -1,2 +1,2 @@
-# rpg-thing
-Prototype/scratchpad for turn based RPG system
+# Agent API
+Agent API for controlling NPCs 
