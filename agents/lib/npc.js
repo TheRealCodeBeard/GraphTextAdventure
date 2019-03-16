@@ -4,7 +4,7 @@ const Utils = require('../../shared/lib/utils')
 const Agent = require('../../shared/models/agent')
 require('../consts.js')
 
-var npcDB = null
+var templateDB = null
 
 class NPC {
   constructor(type) {
@@ -61,9 +61,9 @@ class NPC {
   }
 
   static create(type) {
-    if(!npcDB) npcDB = JSON.parse(fs.readFileSync(NPC_DB))
+    if(!templateDB) templateDB = JSON.parse(fs.readFileSync(NPC_DB))
 
-    let template = npcDB.templates[type]
+    let template = templateDB.templates[type]
     if(!template) {
       throw new Error(`Unable to create NPC of type: ${type}`)
     }

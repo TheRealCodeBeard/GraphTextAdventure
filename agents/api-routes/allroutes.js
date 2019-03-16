@@ -4,6 +4,8 @@ const NPC = require('../lib/npc')
 const ApiResponse = require('../../shared/models/api-resp')
 //const Utils = require('../lib/utils')
 
+const gwr = require('../../shared/lib/gremlin_wrapper');
+
 var db = {}
 
 /**
@@ -43,6 +45,9 @@ router.post('/api/agents/create/npc', function (req, res, next) {
 
   try { 
     let npc = NPC.create(type)
+
+    //gwr.query
+
     db[npc.id] = npc
     npc.moveTo(locationId)
     sendResp(res, "success", "", [ npc ])
