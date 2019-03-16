@@ -37,4 +37,10 @@ app.get('/api/player/:id/room',(req,res)=>{
     })
 });
 
+app.get('/api/player/:id',(req,res)=>{
+    gwr.get_player_vector(req.params.id,(vectors)=>{
+        res.send(vectors.map(gwr.player_vector_to_object));
+    })
+});
+
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

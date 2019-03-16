@@ -45,6 +45,10 @@ let vector_in = function(vectorid,next){
     gremlin_query("g.v('id',vectorid).outE().where(has('label','in')).inV()",{vectorid:vectorid},next);
 };
 
+let get_vector = function(vectorid,next){
+    gremlin_query("g.v('id',vectorid)",{vectorid:vectorid},next);
+};
+
 let reformat_item_vector = function(item){
     return {
         name:item.properties.name[0].value,
@@ -60,12 +64,21 @@ let reformat_room_vector = function(room){
     };
 };
 
+let reformat_player_vector = function(player){
+    return {
+        id:player.id,
+        name:player.properties.name[0].value
+    };
+};
+
 module.exports = {
     return_current:return_current_graph,
     items_held_by:get_items_attached_to,
     items_all:get_all_items,
     item_vector_to_object:reformat_item_vector,
     room_vector_to_object:reformat_room_vector,
+    get_player_vector:get_vector,//probably useful abstraction for any vectors?
+    player_vector_to_object:reformat_player_vector,
     in_room:vector_in,
     query:gremlin_query
 };
