@@ -55,9 +55,15 @@ let resplafunt = function(data){
    return the_data;
 };
 
-const playerid = '8bf55d9c-ff0e-4fd6-9846-817dcb483392';//Currently this is a fixed node idea. It should be passed ... obvs
+let playerid = '';
 
 let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
+
+let player_load = function(){
+    playerid = document.getElementById('player_guid').value;
+    load_player_items();
+    load_player_room_items();
+};
 
 let load_player_items = function(){
     let it = document.getElementById('player_items');
@@ -102,7 +108,5 @@ let go = function(){
                 layout: graph_layout
             });
             lod.innerHTML="";
-        })
-        .then(load_player_items)
-        .then(load_player_room_items);
+        });
 }; 
