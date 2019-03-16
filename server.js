@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const gwr = require("./gremlin_wrapper.js");
+const gwr = require("./shared/lib/gremlin_wrapper.js/index.js");
 const app = express();
 const port = 3000;
 

@@ -1,5 +1,5 @@
 const gremlin = require('gremlin');
-const config = require("./config");
+const config = require("../../config");
 
 //Picks up the config and creastes the client
 const gremlinClient = gremlin.createClient(

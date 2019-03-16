@@ -13,7 +13,7 @@ const readline = require('readline');//npm install readline
 const colors = require('colors');//npm install colors
 const http = require('http');
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
-const gwr = require("./gremlin_wrapper.js");
+const gwr = require("./shared/lib/gremlin_wrapper.js");
 const query = gwr.query;
 
 //Write to the console in the debug colour.
