@@ -1,0 +1,16 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "Shared code",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheRealCodeBeard/GraphTextAdventure.git"
+  },
+  "dependencies": {
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "author": "Phil Harvey & Ben Coleman",
+  "license": "MIT"
+}

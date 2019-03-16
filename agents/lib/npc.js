@@ -1,7 +1,7 @@
 const fs = require('fs')
-const NameGenerator = require('./name-gen')
-const Utils = require('./utils')
-const Agent = require('./models/agent')
+const NameGenerator = require('../../shared/lib/name-gen')
+const Utils = require('../../shared/lib/utils')
+const Agent = require('../../shared/models/agent')
 require('../consts.js')
 
 var npcDB = null
@@ -9,7 +9,8 @@ var npcDB = null
 class NPC {
   constructor(type) {
     // Mixin the abstract agent properties with this NPC
-    Object.assign( this, new Agent() )
+    let id = require('uuid/v4')()
+    Object.assign( this, new Agent(id) )
 
     this.name = "Nameless"
     this.agentType = 'npc'

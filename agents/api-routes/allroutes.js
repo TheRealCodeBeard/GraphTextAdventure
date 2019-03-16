@@ -1,7 +1,7 @@
 var express = require('express')
 var router = express.Router();
 const NPC = require('../lib/npc')
-const ApiResponse = require('../lib/models/api-resp')
+const ApiResponse = require('../../shared/models/api-resp')
 //const Utils = require('../lib/utils')
 
 var db = {}

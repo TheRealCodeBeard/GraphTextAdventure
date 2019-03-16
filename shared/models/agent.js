@@ -2,9 +2,9 @@ const uuidv4 = require('uuid/v4')
 const Entity = require('./entity')
 
 class Agent {
-  constructor(type) {
+  constructor(id) {
     // Mixin the abstract entity properties with this Agent
-    Object.assign( this, new Entity(`agents`) )    
+    Object.assign( this, new Entity(`agents`, id) )    
     this.agentType = '' // 'npc' or 'player'
 
     this.items = []
