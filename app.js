@@ -172,6 +172,12 @@ let add_description = function(words,next){
    STANDARD ACTION FUNCTIONS
 */
 
+let api_switch = function(words,api,local,next){
+    if(words.length>1 && words[1]==="api") api(next);
+    else if(words.length>1 && words[1]==="local") local(next);
+    else use_api ? api(next) : local(next);
+};
+
 //This provides the description property of the first rooms in the array given.
 //Should turn this into a generic 'describer' that takes in any kind of object array and collates whole description
 let describe = function(rooms){
@@ -206,8 +212,39 @@ let describe_items = function(items){
     }
 };
 
-//The top level action function for describing what the player sees
-let look = function(next){
+
+let inventory_local = function(next){
+    getPlayerItems(items=>{
+        if(items.length){
+            desc(`You have ${items.length} items`);
+            describe_items(items);
+        } else {
+            desc(`You don't have anything.`);
+        }
+        next();
+    });
+};
+
+let inventory_api = function(next){
+    let base_url = "http://localhost:3000"
+    http.get(`${base_url}/api/items/player/${world.playerNodeID}`,resp=>{
+        let data = '';
+        resp.on('data',chunk=>data +=chunk);
+        resp.on('end',()=>{
+            let items = JSON.parse(data);
+            desc(`You have ${items.length} items`);
+            items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
+            next();
+        });
+    });
+};
+
+//Describe what the player holds
+let inventory = function(words,next){
+    api_switch(words,inventory_api,inventory_local,next);
+};
+
+let look_local = function(next){
     process.stdout.write("Looking ... ".green);
     //Only does current room and exists so far, but should do items in rooms too
     query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
@@ -228,37 +265,14 @@ let look = function(next){
     });
 };
 
-
-let inventory_api = function(next){
-    let base_url = "http://localhost:3000"
-    debug('Using API to get Player Inventory');
-    http.get(`${base_url}/api/items/player/${world.playerNodeID}`,resp=>{
-        let data = '';
-        resp.on('data',chunk=>data +=chunk);
-        resp.on('end',()=>{
-            let items = JSON.parse(data);
-            desc(`You have ${items.length} items`);
-            items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
-            next();
-        });
-    });
+let look_api = function(next){
+    error('Not implemented');
+    next();
 };
 
-//Describe what the player holds
-let inventory = function(words,next){
-    if(words.length>1 && words[1]==="api"){//this one we will look via the API
-        inventory_api(next);
-    } else { //this is the standard call
-        getPlayerItems(items=>{
-            if(items.length){
-                desc(`You have ${items.length} items`);
-                describe_items(items);
-            } else {
-                desc(`You don't have anything.`);
-            }
-            next();
-        });
-    }
+//The top level action function for describing what the player sees
+let look = function(words,next){
+    api_switch(words,look_api,look_local,next);
 };
 
 //This detaches the item from the room and attaches it to the player.
@@ -365,15 +379,13 @@ let walk = function(words,next){
     }
 };
 
-
-
 //This is the main 'parser' that turns a user input into the function call.
 //Very very basic. Would be better as a bot.
 let act = function(command, next){
     let words = command.split(" ");
     switch(words[0]) {
         case "look": 
-            look(next);
+            look(words,next);
             break;
         case "inventory":
             inventory(words,next);
@@ -475,7 +487,7 @@ let setup_room = function(next){
 //Other setup functions are all called from here. 
 let setup = function(next){
     debug('[Setting up ...');
-    let last = ()=>{debug(' Setup complete!]\n');next();}
+    let last = ()=>{debug(' Setup complete!]\n');info("Use 'engine: (api|local)' to use API or LOCAL command eval.");next();}
     let two = ()=>{setup_room(last);}
     setup_player(two);//Call back style for chaining.
 };
@@ -487,7 +499,7 @@ let setup = function(next){
 //This is the main game loop.
 //It is asnyc and recursive to work with RL and Graph APIs.
 let interactive = function(finalise){
-    rl.question('\n[What would you like to do?]\n> '.green,(response)=>{
+    rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n>`.green,(response)=>{
         if(response === "quit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
     });
