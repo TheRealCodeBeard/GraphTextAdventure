@@ -1,0 +1,154 @@
+[
+  {
+    "id": "84828cc1-248c-4c75-825f-4e60f3a1e7eb",
+    "label": "player",
+    "type": "vertex",
+    "properties": {
+      "name": [
+        {
+          "id": "2bd4dc00-506c-4d18-accf-53f2f061f037",
+          "value": "First Player (for testing)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "89c7778f-7041-4664-9f39-75b02a2b9767",
+    "label": "room",
+    "type": "vertex",
+    "properties": {
+      "description": [
+        {
+          "id": "6bf5f290-1cbf-48bb-915a-6b5518e3c0a9",
+          "value": "A small dark room, a miasma hangs in the air"
+        }
+      ]
+    }
+  },
+  {
+    "id": "0deb6f75-f0df-429f-ba4a-6c2ff4531466",
+    "label": "room",
+    "type": "vertex",
+    "properties": {
+      "made": [
+        {
+          "id": "43bd132f-e967-4e67-99c8-8438573653b7",
+          "value": "node app"
+        }
+      ],
+      "description": [
+        {
+          "id": "07ea0668-2a2e-4a6c-b90f-535b08b355b7",
+          "value": "The dungeon corridor turns a corner here, the air is thick with dust"
+        }
+      ]
+    }
+  },
+  {
+    "id": "6d516d8d-a95a-4147-8f4c-39eaa6d55711",
+    "label": "room",
+    "type": "vertex",
+    "properties": {
+      "made": [
+        {
+          "id": "75406e8e-08cc-41cd-a190-ed45ca745bf4",
+          "value": "node app"
+        }
+      ],
+      "description": [
+        {
+          "id": "7c0fe87c-d399-44da-b45e-0beeeb6a825b",
+          "value": "The sense this is the heart of the dungeon, many paths lead from here"
+        }
+      ]
+    }
+  },
+  {
+    "id": "e4eb3e1a-4139-439b-9918-f8a3b748ea13",
+    "label": "room",
+    "type": "vertex",
+    "properties": {
+      "made": [
+        {
+          "id": "51b0be6c-d670-40ff-87ac-d23742ba9a2d",
+          "value": "node app"
+        }
+      ],
+      "description": [
+        {
+          "id": "4805ff92-bf34-496a-a0b0-32aba9ac093e",
+          "value": "The stone walls are damp with mold"
+        }
+      ]
+    }
+  },
+  {
+    "id": "78cbedad-7776-43a3-bac8-f42a310daf52",
+    "label": "room",
+    "type": "vertex",
+    "properties": {
+      "made": [
+        {
+          "id": "e87f0506-3995-4f61-87c0-70b2c004f31c",
+          "value": "node app"
+        }
+      ],
+      "description": [
+        {
+          "id": "d43db93b-8b45-477e-8f5c-c9662580b9bf",
+          "value": "A empty prison cell"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ef0dc51c-84d9-4b89-9a70-ddb14a4ddfdd",
+    "label": "item",
+    "type": "vertex",
+    "properties": {
+      "made": [
+        {
+          "id": "542909db-2d89-4362-85ff-781f77a2cab0",
+          "value": "node app"
+        }
+      ],
+      "description": [
+        {
+          "id": "2c352bfe-487a-4332-b840-e719a8dafbc2",
+          "value": "A rusty old sword"
+        }
+      ],
+      "name": [
+        {
+          "id": "d4642e53-b230-4eb9-9b26-0d9a11317cc9",
+          "value": "Sword"
+        }
+      ]
+    }
+  },
+  {
+    "id": "50e8a259-0de0-4516-939b-e9676846ca64",
+    "label": "npc",
+    "type": "vertex",
+    "properties": {
+      "name": [
+        {
+          "id": "cce702a6-4b8d-46f0-9eda-a5d0807b4531",
+          "value": "goblin"
+        }
+      ],
+      "description": [
+        {
+          "id": "4398d1d1-72b3-441d-93bc-e924a40690f2",
+          "value": "hideous"
+        }
+      ],
+      "jsonString": [
+        {
+          "id": "f6001a2b-ca81-401b-9656-6b00c3d6a206",
+          "value": "{\"gold\":2,\"str\":12,\"phy\":11,\"cmb\":17,\"agl\":18,\"men\":21,\"maxHp\":6,\"hp\":6,\"arm\":1,\"name\":\"Gluronk\",\"type\":\"goblin\",\"dead\":false,\"shortDesc\":\"hideous\"}"
+        }
+      ]
+    }
+  }
+]

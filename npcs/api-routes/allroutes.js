@@ -37,7 +37,7 @@ router.post('/api/npcs/create', async function (req, res, next) {
 
     let npc = NPC.create(type)
     let gremlinRes = await gremlin.create_npc(npc, locationId)
-    console.log(`### DEBUG: Created ${gremlinRes[0].label} ${gremlinRes[0].id} in location ${locationId}`)
+    debug(`Created NPC ${gremlinRes[0].id} in location ${locationId}`)
     sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
@@ -57,10 +57,10 @@ router.post('/api/npcs/create', async function (req, res, next) {
  */
 router.get('/api/npcs/:id', async function (req, res, next) {
   try {
+    debug(`Fetching NPC ${req.params.id}`)
     let gremlinRes = await gremlin.get_npcs('id', req.params.id)
     if(gremlinRes.length == 0) { send404(res, `NPC ${req.params.id} not found`); return }
     
-    console.log(`### DEBUG: Got ${gremlinRes[0].label} ${gremlinRes[0].id}`)
     let npc = NPC.hydrateFromGremlin(gremlinRes)
     sendOne(res, "success", "", npc, req.params.id)
   } catch(e) {
@@ -81,10 +81,10 @@ router.get('/api/npcs/:id', async function (req, res, next) {
  */
 router.get('/api/npcs/:id/describe', async function (req, res, next) {
   try {
+    debug(`Describing NPC ${req.params.id}`)
     let gremlinRes = await gremlin.get_npcs('id', req.params.id)
     if(gremlinRes.length == 0) { send404(res, `NPC ${req.params.id} not found`); return }
     
-    console.log(`### DEBUG: Got ${gremlinRes[0].label} ${gremlinRes[0].id}`)
     let npc = NPC.hydrateFromGremlin(gremlinRes)
     let desc = npc.describeVerbose()
     sendOne(res, "success", desc, npc, req.params.id)
@@ -103,6 +103,8 @@ router.get('/api/npcs/:id/describe', async function (req, res, next) {
  * @returns {Error} default - Unexpected error
  */
 router.get('/api/npcs', async function (req, res, next) {
+  debug(`Listing ALL NPCs`)
+
   let gremlinResults = await gremlin.get_npcs('label', 'npc')
   let entities = []
   for(let gremlinRes of gremlinResults) {
@@ -127,14 +129,13 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
   let value = req.body.value
   let msg = ""
   try {
+    debug(`Damaging NPC ${req.params.id}`)
     if(!value) throw new Error(`value missing from body`)
 
     let gremlinRes = await gremlin.get_npcs('id', req.params.id)
     if(gremlinRes.length == 0) { send404(res, `NPC ${req.params.id} not found`); return }
     
-    console.log(`### DEBUG: Got ${gremlinRes[0].label} ${gremlinRes[0].id}`)
     let npc = NPC.hydrateFromGremlin(gremlinRes)
-
     let msg = npc.takeDamage(value)
     await gremlin.update_npc(req.params.id, npc)
 
@@ -189,4 +190,8 @@ function send404(res, apiMsg) {
   res.status(404).send(new ApiModel.ApiResponse(apiMsg, "", []))
 }
 
+function debug(m) {
+  if(true)
+    console.log(`### ${m}`)
+}
 module.exports = router

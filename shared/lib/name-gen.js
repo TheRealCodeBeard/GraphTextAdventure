@@ -9,8 +9,9 @@ class NameGenerator {
   }
 
   name() {
-    return fn('Pathfinder', 'orcs', 1)[0];
-    //return this._random(this.adjectives) + ' ' + this._random(this.nouns)
+    // Using this library https://www.npmjs.com/package/fantasy-names
+
+    return fn('Fantasy', 'Orcs', 1)[0];
   }
 
   simpleDesc() {

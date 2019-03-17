@@ -21,6 +21,8 @@
     "colors": "^1.3.3",
     "express": "^4.16.4",
     "gremlin": "2.7.0",
-    "readline": "^1.3.0"
+    "npc-api": "file:npcs",
+    "readline": "^1.3.0",
+    "shared": "file:shared"
   }
 }
