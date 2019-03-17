@@ -28,20 +28,20 @@ const gremlin = require('../../shared/lib/gremlin_wrapper');
  * @returns {Error} default - Unexpected error
  */
 router.post('/api/npcs/create', async function (req, res, next) {
-  let type = req.body.type
-  let locationId = req.body.locationId
+  let type = req.body.type;
+  let locationId = req.body.locationId;
 
   try {
-    if(!type) throw new Error(`type missing`)
-    if(!locationId) throw new Error(`locationId missing`)
+    if(!type) throw new Error(`type missing`);
+    if(!locationId) throw new Error(`locationId missing`);
 
     let npc = NPC.create(type)
-    let gremlinRes = await gremlin.create_npc(npc, locationId)
-    console.log(`### DEBUG: Created ${gremlinRes[0].label} ${gremlinRes[0].id} in location ${locationId}`)
-    sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id)
+    let gremlinRes = await gremlin.create_npc(npc, locationId);
+    console.log(`### DEBUG: Created ${gremlinRes[0].label} ${gremlinRes[0].id} in location ${locationId}`);
+    sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id);
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
-    send500(res, e.toString())
+    send500(res, e.toString());
   }
 })
 

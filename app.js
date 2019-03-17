@@ -24,7 +24,7 @@ let game = function(text){ console.log(text.green); };
 let info = function(text){ console.log(text.yellow); };
 let desc = function(text){ console.log(text.cyan); };
 
-let use_api = false;
+let use_api = true;
 
 /* 
    UTILITY FUNCTIONS
@@ -143,13 +143,13 @@ let make_npc = function(words, next){
     call_api_post(`${config.npcURL}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
     .then(resp => {
         if(resp && resp.data) {
-            info(`${resp.data.gameMsg} before your very eyes!`)
+            info(`${resp.data.gameMsg} before your very eyes!`);
         }
-        next()
+        next();
     })
     .catch(err => {
-        error(`Failed to spawn NPC. ${err.response.data.apiMsg}`)
-        next()
+        error(`Failed to spawn NPC. ${err.response.data.apiMsg}`);
+        next();
     })
 };
 
@@ -184,7 +184,7 @@ let add_description = function(words,next){
         {playerRoomId:world.playerCurrentRoomID,desc:description},
         (results)=>{
             debug("Description added to room");
-            look(null,next);        
+            act("look",next);        
         }
     );
 };
@@ -405,7 +405,7 @@ let walk = function(words,next){
                             (results)=>{
                                 world.playerCurrentRoomID = chosen[0].inV;//Update state
                                 game(" arrived!]");
-                                look(null,next);//Give the standard description of the new room.
+                                act("look",next); //Give the standard description of the new room.
                         });
                 });
             } else {//Feedback if the user has made a mistake
