@@ -1,2 +1,2 @@
-# Agent API
-Agent API for controlling Players 
+# Player API
+Player API for controlling Players 

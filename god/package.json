@@ -1,7 +1,7 @@
 {
-  "name": "player-api",
+  "name": "god-api",
   "version": "0.0.1",
-  "description": "Player API for unnamed MUD game",
+  "description": "God API for unnamed MUD game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

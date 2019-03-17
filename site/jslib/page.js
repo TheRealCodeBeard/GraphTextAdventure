@@ -55,6 +55,8 @@ let resplafunt = function(data){
    return the_data;
 };
 
+let player_root = 'http://localhost:5000';
+
 let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
 
 let hidePlayerList = function(){
@@ -71,10 +73,10 @@ let set_player = function(guid){
 let load_players = function(){
     let ps = document.getElementById('player_list');
     ps.innerHTML="Loading...";
-    fetch(confic.playerURL + '/api/players')
+    fetch(player_root+'/api/players')
         .then(response=>response.json())
         .then(data=>{
-            ps.innerHTML = data.map((player)=>'<div class="item"><span onclick="set_player(\''+player.id+'\')">'+player.id+"</span><span>"+player.name+"</span>");
+            ps.innerHTML = data.entities.map((player)=>'<div class="item"><span onclick="set_player(\''+player.id+'\')">'+player.id+"</span><span>"+player.name+"</span>");
         });
 };
 
@@ -95,7 +97,7 @@ let load_player_room_items = function(guid){
         .then(response=>response.json())
         .then(data=>{
             let room = data[0];//assumptions, player can be in one room only
-            r.innerHTML = room.description;
+            r.innerHTML = room.description + " (" + room.id + ")";
             return room.id;
         })
         .then(id=>{

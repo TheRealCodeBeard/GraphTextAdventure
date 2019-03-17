@@ -12,9 +12,9 @@ let mainRoutes = require('./api-routes/allroutes');
 app.use('/', mainRoutes);
 
 // Server port
-var port = process.env.PORT || 5000;
+var port = process.env.PORT || 6000;
 
 // Start the server
 var server = app.listen(port, function () {
-    console.log(`### Player API Server listening on ${server.address().port}`);
+    console.log(`### God API Server listening on ${server.address().port}`);
   });

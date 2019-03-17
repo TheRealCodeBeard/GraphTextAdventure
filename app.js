@@ -296,6 +296,11 @@ let look_local = function(next){
 };
 
 let look_api = function(next){
+    call_api(`${config.godURL}/api/room/${world.playerCurrentRoomID}/look`,(result)=>{
+        desc(result.gameMsg);
+        next();
+    });
+    /*
     call_api(`${config.baseURL}/api/players/${world.playerNodeID}/look`,(result)=>{
         result.locations.forEach(location=>desc(location.description));
         if(result.doors && result.doors.length){
@@ -312,6 +317,7 @@ let look_api = function(next){
         } else desc("You are alone in this room.".grey);
         next();
     });
+    */
 };
 
 

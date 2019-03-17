@@ -1,8 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const gwr = require("./shared/lib/gremlin_wrapper.js");
 const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 const port = 3000;
 
 app.use(express.static('site'))
@@ -37,6 +40,8 @@ app.get('/api/players/:id/room',(req,res)=>{
     });
 });
 
+
+/* do be deleted: use new god service
 let careful_convert = function(result){
     let out = null;
     if(result){
@@ -50,13 +55,6 @@ let careful_convert = function(result){
 };
 
 let player_look = function(player_guid,next){
-    /*
-        Attempting look in one query, so in plain language:
-            from the player node.edges that hasLabel 'in'.those edges in vertex.those vertexs out edges.where their in vertex are rooms.store in val
-            .back to room.deduplicate.store the room in 'val'
-            .out edges labeled 'holds'.their in vertexs (which are items).store in val
-            .all things in 'val'.unfold to one array deduplicate
-    */
    //Convert this to multiple queries to prevent dependancies in output.
     gwr.query(`g.v(pguid).outE().hasLabel('in').inV().outE().where(inV().hasLabel('room')).store('val')
         .outV().dedup().store('val')
@@ -82,11 +80,14 @@ let player_look = function(player_guid,next){
     });
 };
 
+
 app.get('/api/players/:id/look',(req,res)=>{
     player_look(req.params.id,(results)=>{
         res.send(results);
     });
 });
+*/
+
 
 app.get('/api/players/:id',(req,res)=>{
     gwr.get_player_vector(req.params.id,(vectors)=>{
@@ -94,10 +95,12 @@ app.get('/api/players/:id',(req,res)=>{
     })
 });
 
+/* to be deleted use new player service 
 app.get('/api/players', (req,res)=>{
     gwr.players_all((players)=>{
         res.send(players.map(gwr.player_vector_to_object));
     });
 });
+*/
 
 app.listen(port, () => console.log(`Bloated old server listening on port ${port}!`));

@@ -51,9 +51,11 @@ let get_all_items = function(next){
     gremlin_query("g.v().where(has('label','item'))",null,next);
 };
 
+/* to be deleted user player service instead
 let get_all_players = function(next){
     gremlin_query("g.v().where(has('label','player'))",null,next);
 };
+*/
 
 let vector_in = function(vectorid,next){
     gremlin_query("g.v('id',vectorid).outE().where(has('label','in')).inV()",{vectorid:vectorid},next);
@@ -118,7 +120,7 @@ module.exports = {
     return_current:return_current_graph,
     items_held_by:get_items_attached_to,
     items_all:get_all_items,
-    players_all:get_all_players,
+    //players_all:get_all_players,
     item_vector_to_object:reformat_item_vector,
     room_vector_to_object:reformat_room_vector,
     get_player_vector:get_vector,//probably useful abstraction for any vectors?

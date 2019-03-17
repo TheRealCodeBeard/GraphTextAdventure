@@ -8,5 +8,6 @@ config.collection = "GRAPH COLLECTION"//The name of the Graph Collection (Second
 config.playerVectorID = "PLAYER VECTOR GUID"//Your unique player guid
 config.baseURL = "BASE URL OF API NO TRAILING /";//Concatenated on to api calls. E.g. "http://localhost:3000";
 config.npcURL = "BASE URL OF NPC API NO TRAILING /"//Concatenated on to NPC api calls. E.g. "http://localhost:3000";
-
+config.playerURL = "BASE URL OF PLAYER API NO TRAILING /";//Player calls
+config.godURL = "BASE URL OF GOD API NO TRAILING /";//God calls
 module.exports = config;
