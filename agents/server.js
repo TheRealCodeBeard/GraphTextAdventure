@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 let mainRoutes = require('./api-routes/allroutes');
 app.use('/', mainRoutes);
 
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 4000;
 
 let swaggerOptions = {
   swaggerDefinition: {

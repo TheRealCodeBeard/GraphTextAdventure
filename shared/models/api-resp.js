@@ -3,7 +3,20 @@ class ApiResponse {
     this.apiMsg = apiMsg
     this.gameMsg = gameMsg
     this.entities = entities
+
+    // entity = {
+    //   id: id
+    //   data: object
+    // }
   }
 }
 
-module.exports = ApiResponse
+class ApiEntity {
+  constructor(id, object) {
+    this.id = id
+    this.data = object
+  }
+}
+
+module.exports.ApiResponse = ApiResponse
+module.exports.ApiEntity = ApiEntity

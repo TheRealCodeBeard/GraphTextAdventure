@@ -1,0 +1,14 @@
+{
+  "workbench.colorCustomizations": {
+    "terminal.background": "#0e1018",
+    "terminal.ansiBlack": "#000",
+    "terminal.ansiBlue": "#59a1ff",
+    "titleBar.activeBackground": "#6b75dc",
+    "titleBar.inactiveBackground": "#6b75dc99",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveForeground": "#e7e7e799",
+    "statusBar.background": "#6b75dc",
+    "statusBarItem.hoverBackground": "#949be6",
+    "statusBar.foreground": "#e7e7e7"
+  }
+}

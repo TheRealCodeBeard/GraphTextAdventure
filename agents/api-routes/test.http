@@ -1,33 +1,32 @@
 ### Create a NPC
 # @name create
-POST http://localhost:3000/api/agents/create/npc
+POST http://localhost:4000/api/npcs/create
 content-type: application/json
 
 {
   "type": "goblin",
-  "roomId": "4573647846"
+  "locationId": "07cd761a-81ad-46fd-86cf-d418237a8abd"
 }
 
-### Get new NPC agent id
+### Get new NPC id
 @agentId = {{create.response.body.$.entities[0].id}}
 
-### Get NPC agent 
-GET http://localhost:3000/api/{{agentId}}
+### Get NPC  
+GET http://localhost:4000/api/npcs/{{agentId}}
 
-### Describe monster 
-GET http://localhost:3000/api/{{agentId}}/describe
+### Describe NPC 
+GET http://localhost:4000/api/npcs/{{agentId}}/describe
 
-### Get ALL agents
-GET http://localhost:3000/api/agents
+### Get ALL NPCs
+GET http://localhost:4000/api/npcs
 
-### Damage an agent
-POST http://localhost:3000/api/{{agentId}}/interact
+### Damage an NPC
+POST http://localhost:4000/api/npcs/{{agentId}}/damage
 content-type: application/json
 
 {
-  "action": "damage",
-  "data": {{$randomInt 2 12}}
+  "value": {{$randomInt 2 8}}
 }
 
-### Move an agent
-PUT http://localhost:3000/api/{{agentId}}/move/87438597
+### Move a NPC somewhere
+PUT http://localhost:4000/api/npcs/{{agentId}}/move/c09e4f2b-91cd-4d0e-a173-6ff23e68d6e1
