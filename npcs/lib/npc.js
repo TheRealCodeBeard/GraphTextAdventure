@@ -2,7 +2,7 @@ const fs = require('fs')
 const NameGenerator = require('../../shared/lib/name-gen')
 const Utils = require('../../shared/lib/utils')
 const BaseAttributes = require('../../shared/models/base-atrributes')
-require('../consts.js')
+require('../../shared/consts')
 
 var templateDB = null
 
@@ -15,6 +15,8 @@ class NPC {
     this.type = type
     this.dead = false
     this.shortDesc = ''
+    
+    this.moveChance = 0
   }
 
   toString() {
@@ -86,6 +88,7 @@ class NPC {
     let ng = new NameGenerator()
     npc.name = ng.name()
     npc.shortDesc = ng.simpleDesc()
+    npc.moveChance = template.moveChance
     
     return npc
   }
