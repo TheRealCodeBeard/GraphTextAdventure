@@ -16,11 +16,11 @@ async function gameClockLoop() {
       let npcs = await axios.get(`${config.npcURL}/api/npcs`);
       if(!npcs || !npcs.data) throw new Error(`No NPCs returned from API`)
       for(let npcData of npcs.data.entities) {
-        console.log(npcData.data.moveChance);
-        
+        let doMove = Utils.skillCheck(npcData.data.moveChance, 0)
+        console.log(doMove);
       }
     } catch(e) {
-      console.error(e);
+      console.error(e.toString());
     }
 
     await Utils.sleep(CLOCK_SECS_PER_TICK * 1000);

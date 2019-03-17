@@ -53,7 +53,7 @@ exports.d = d
 // Check a stat (1-100) against a percentage chance check
 //
 exports.skillCheck = function(stat, mod) {
-  return d(1, 100) <= (stat + mod)
+  return (d(1, 100) < (stat + mod))
 }
 
 //
