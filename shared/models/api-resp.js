@@ -2,12 +2,7 @@ class ApiResponse {
   constructor(apiMsg = "success", gameMsg = "", entities = []) {
     this.apiMsg = apiMsg
     this.gameMsg = gameMsg
-    this.entities = entities
-
-    // entity = {
-    //   id: id
-    //   data: object
-    // }
+    this.entities = entities // Should be an array of ApiEntity 
   }
 }
 

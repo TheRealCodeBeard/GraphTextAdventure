@@ -1,21 +1,17 @@
 {
-  "name": "agent-api",
-  "version": "1.0.0",
-  "description": "Agent API for unnamed MUD game",
+  "name": "npc-api",
+  "version": "0.0.1",
+  "description": "NPC API for unnamed MUD game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/benc-uk/rpg-thing.git"
+    "url": "git+https://github.com/TheRealCodeBeard/GraphTextAdventure.git"
   },
   "author": "Ben Coleman",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/benc-uk/rpg-thing/issues"
-  },
-  "homepage": "https://github.com/benc-uk/rpg-thing#readme",
   "dependencies": {
     "dotenv": "^7.0.0",
     "express": "^4.16.4",

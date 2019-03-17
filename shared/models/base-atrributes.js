@@ -2,9 +2,7 @@ class BaseAtrributes {
   constructor() {
     // // Mixin the abstract entity properties with this Agent
     // Object.assign( this, new Entity(`agents`) )    
-    //this.agentType = '' // 'npc' or 'player'
 
-    //this.items = []
     this.gold = 0
 
     this.str = 1
