@@ -143,8 +143,12 @@ let make_npc = function(words, next){
     call_api_post(`${config.npcURL}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
     .then(resp => {
         if(resp && resp.data) {
-            info(`NPC '${resp.data.entities[0].data.type}' spawned`)
+            info(`${resp.data.gameMsg} before your very eyes!`)
         }
+        next()
+    })
+    .catch(err => {
+        error(`Failed to spawn NPC. ${err.response.data.apiMsg}`)
         next()
     })
 };
@@ -231,6 +235,7 @@ let describe_items = function(items){
 };
 
 //the wrapper method for calling the API based engine
+// !!TODO!! move this to Axios as well
 let call_api = function(call,next){
     http.get(call,resp=>{
         let data = '';
@@ -239,15 +244,12 @@ let call_api = function(call,next){
     });
 };
 
-//the wrapper method for calling the API based engine
+// Make a HTTP post call
 let call_api_post = function(url, data){
     return axios.post(url, data)
     .then((response) => {
         return response
-    })
-    .catch((error) => {
-        console.error(error.toString());
-    });    
+    })   
 };
 
 //Describe what the player holds methods

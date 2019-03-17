@@ -38,7 +38,7 @@ router.post('/api/npcs/create', async function (req, res, next) {
     let npc = NPC.create(type)
     let gremlinRes = await gremlin.create_npc(npc, locationId)
     console.log(`### DEBUG: Created ${gremlinRes[0].label} ${gremlinRes[0].id} in location ${locationId}`)
-    sendOne(res, "success", "", npc, gremlinRes[0].id)
+    sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     send500(res, e.toString())

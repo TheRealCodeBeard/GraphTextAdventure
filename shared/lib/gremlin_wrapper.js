@@ -89,12 +89,14 @@ let create_npc = function(npc, locationId, next) {
     return gremlin_query_promise(`g.addV('agent').as('x')
         .property('label', 'npc')
         .property('name', name)
+        .property('description', shortDesc)
         .property('jsonString', jsonString)
         .addE('in').to( g.V('id', locationId) ).outV()`,
         { 
             locationId: locationId, 
             name: npc.type, 
-            jsonString: JSON.stringify(npc)
+            jsonString: JSON.stringify(npc),
+            shortDesc: npc.shortDesc
         })
 }
 
