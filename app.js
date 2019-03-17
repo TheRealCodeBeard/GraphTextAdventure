@@ -306,7 +306,7 @@ let look_api = function(next){
         } else desc("You don't see any items.".grey);
         if(result.npcs && result.npcs.length){
             desc(`You also see ${result.npcs.length} figures(s)`.grey);
-            result.npcs.forEach(npc=>desc(`  ${npcs.name.white}`));
+            result.npcs.forEach(npc=>desc(`  ${npc.name.white}`));
         } else desc("You are alone in this room.".grey);
         next();
     });
