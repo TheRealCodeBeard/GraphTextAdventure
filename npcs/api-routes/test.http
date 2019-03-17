@@ -5,7 +5,7 @@ content-type: application/json
 
 {
   "type": "goblin",
-  "locationId": "07cd761a-81ad-46fd-86cf-d418237a8abd"
+  "locationId": "b80c8112-f389-49a7-8cf6-4aad3b3ec601"
 }
 
 ### Get new NPC id

@@ -424,9 +424,11 @@ let walk = function(words,next){
 let act = function(command, next){
     let words = command.split(" ");
     switch(words[0]) {
+        case "l": 
         case "look": 
             api_switch(words,look_api,look_local,next);
             break;
+        case "i":
         case "inventory":
             api_switch(words,inventory_api,inventory_local,next);
             break;
@@ -437,6 +439,7 @@ let act = function(command, next){
         case "walk":
             walk(words,next);
             break;
+        case "get":
         case "take":
             take(words,next);
             break;

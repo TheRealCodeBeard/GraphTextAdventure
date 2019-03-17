@@ -34,6 +34,6 @@ expressSwagger(swaggerOptions)
 
 // Start the server
 var server = app.listen(port, function () {
-  console.log(`### Server listening on ${server.address().port}`);
+  console.log(`### NPC API Server listening on ${server.address().port}`);
 });
 
