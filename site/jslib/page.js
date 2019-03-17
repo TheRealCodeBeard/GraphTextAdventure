@@ -121,6 +121,12 @@ let go = function(){
                 style: graph_style,
                 layout: graph_layout
             });
+            cy.$('[name="room"]').style({ 'background-color': '#70594d' })
+            cy.$('[name="item"]').style({ 'background-color': '#37a6dd' })
+            cy.$('[name="player"]').style({ 'background-color': '#1fc14f' })
+            cy.$('[name="npc"]').style({ 'background-color':'#bc2b14'})
+            cy.$('[label="in"]').style({ 'line-color': '#8b27bc' })
+            cy.$('[label="holds"]').style({ 'line-color': '#1fc4c6' })
             lod.innerHTML="";
         })
         .then(load_players);
