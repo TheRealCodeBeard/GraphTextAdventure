@@ -57,6 +57,7 @@ let player_look = function(player_guid,next){
             .out edges labeled 'holds'.their in vertexs (which are items).store in val
             .all things in 'val'.unfold to one array deduplicate
     */
+   //Convert this to multiple queries to prevent dependancies in output.
     gwr.query(`g.v(pguid).outE().hasLabel('in').inV().outE().where(inV().hasLabel('room')).store('val')
         .outV().dedup().store('val')
         .outE('label','holds').inV().store('val')
@@ -99,4 +100,4 @@ app.get('/api/players', (req,res)=>{
     });
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.listen(port, () => console.log(`Bloated old server listening on port ${port}!`));
