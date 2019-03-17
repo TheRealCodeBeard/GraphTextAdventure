@@ -148,7 +148,7 @@ let make_npc = function(words, next){
         next()
     })
     .catch(err => {
-        error(`Failed to spawn NPC. ${err.response.data.apiMsg}`)
+        error(`Failed to spawn NPC. ${(err.response && err.response.data) ? err.response.data.apiMsg : err}`)
         next()
     })
 };
@@ -184,7 +184,7 @@ let add_description = function(words,next){
         {playerRoomId:world.playerCurrentRoomID,desc:description},
         (results)=>{
             debug("Description added to room");
-            look(null,next);        
+            look_local(next);        
         }
     );
 };
@@ -405,7 +405,7 @@ let walk = function(words,next){
                             (results)=>{
                                 world.playerCurrentRoomID = chosen[0].inV;//Update state
                                 game(" arrived!]");
-                                look(null,next);//Give the standard description of the new room.
+                                look_local(next);//Give the standard description of the new room.
                         });
                 });
             } else {//Feedback if the user has made a mistake
@@ -424,9 +424,11 @@ let walk = function(words,next){
 let act = function(command, next){
     let words = command.split(" ");
     switch(words[0]) {
+        case "l": 
         case "look": 
             api_switch(words,look_api,look_local,next);
             break;
+        case "i":
         case "inventory":
             api_switch(words,inventory_api,inventory_local,next);
             break;
@@ -437,6 +439,7 @@ let act = function(command, next){
         case "walk":
             walk(words,next);
             break;
+        case "get":
         case "take":
             take(words,next);
             break;
