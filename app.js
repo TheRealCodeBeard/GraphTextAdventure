@@ -15,6 +15,7 @@ const http = require('http');
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
 const gwr = require("./shared/lib/gremlin_wrapper.js");
 const query = gwr.query;
+const axios = require('axios')
 
 //Write to the console in the debug colour.
 let debug = function(text){ console.log(text.grey); };
@@ -137,6 +138,17 @@ let make_item = function(words,next){
         });
 };
 
+let make_npc = function(words, next){
+    let type = words[2];
+    call_api_post(`${config.npcURL}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
+    .then(resp => {
+        if(resp && resp.data) {
+            info(`NPC '${resp.data.entities[0].data.type}' spawned`)
+        }
+        next()
+    })
+};
+
 //This is the function that 'makes' things. It will make rooms first and then other things.
 //This would not be in the 'normal player' interface, but in the world builder interface
 let make = function(words,next){
@@ -144,6 +156,8 @@ let make = function(words,next){
         make_room(words,next);
     } else if(words.length>=4 && words[1]==='item'){
         make_item(words,next);
+    } else if(words.length >= 3 && words[1]==='npc'){
+        make_npc(words, next);
     } else {
         info("The syntax for the make command is: "+ "make [room] to [direction].".white);
         info("If a [room] already exists to the [direction] the command will fail.");
@@ -151,6 +165,9 @@ let make = function(words,next){
         info("");
         info("For an item it the syntax is: "+ "make [item] name description".white);
         info("The item will be dropped in the room you make it in");
+        info("");
+        info("For a npc it the syntax is: "+ "make [npc] type".white);
+        info("The npc will spawn in the current room with the player");
         next();
     }
 };
@@ -222,6 +239,17 @@ let call_api = function(call,next){
     });
 };
 
+//the wrapper method for calling the API based engine
+let call_api_post = function(url, data){
+    return axios.post(url, data)
+    .then((response) => {
+        return response
+    })
+    .catch((error) => {
+        console.error(error.toString());
+    });    
+};
+
 //Describe what the player holds methods
 let inventory_local = function(next){
     getPlayerItems(items=>{
@@ -276,9 +304,9 @@ let look_api = function(next){
             desc(`You also see ${result.items.length} item(s)`.grey);
             result.items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
         } else desc("You don't see any items.".grey);
-        if(result.agents && result.agents.length){
-            desc(`You also see ${result.agents.length} figures(s)`.grey);
-            result.agents.forEach(agent=>desc(`  ${agent.name.white}: ${agent.description.grey}`));
+        if(result.npcs && result.npcs.length){
+            desc(`You also see ${result.npcs.length} figures(s)`.grey);
+            result.npcs.forEach(npc=>desc(`  ${npcs.name.white}`));
         } else desc("You are alone in this room.".grey);
         next();
     });

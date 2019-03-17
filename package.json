@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/TheRealCodeBeard/GraphTextAdventure#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "colors": "^1.3.3",
     "express": "^4.16.4",
     "gremlin": "2.7.0",

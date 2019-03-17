@@ -63,7 +63,7 @@ let player_look = function(player_guid,next){
         .select('val').unfold().dedup()`,
         {pguid:player_guid},
         (results)=>{
-            let out_object = {locations:[],doors:[],items:[],agents:[]};
+            let out_object = {locations:[],doors:[],items:[],npcs:[]};
             results.forEach(result=>{
                 if(result.type==='edge' && result.inVLabel==='room' && result.outVLabel==='room') {
                     out_object.doors.push(careful_convert(result));
@@ -71,8 +71,8 @@ let player_look = function(player_guid,next){
                     out_object.locations.push(careful_convert(result));
                 } else if (result.type==='vertex' && result.label==='item'){
                     out_object.items.push(careful_convert(result));
-                } else if (result.type==='vertex' && result.label==='agent'){
-                    out_object.agents.push(careful_convert(result));
+                } else if (result.type==='vertex' && result.label==='npc'){
+                    out_object.npcs.push(careful_convert(result));
                 } else {
                     console.log(`unexpected result ${JSON.stringify(result)}`);
                 }
