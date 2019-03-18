@@ -1,5 +1,5 @@
 // Dotenv handy for local config & debugging
-require('dotenv').config()
+require('dotenv').config({ path: '../.env' })
 
 const express = require('express');
 const bodyParser = require('body-parser');
