@@ -1,0 +1,22 @@
+{
+  "name": "basic-site",
+  "version": "0.0.1",
+  "description": "For me to learn Docker better",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheRealCodeBeard/GraphTextAdventure.git"
+  },
+  "author": "Phil Harvey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheRealCodeBeard/GraphTextAdventure/issues"
+  },
+  "homepage": "https://github.com/TheRealCodeBeard/GraphTextAdventure#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
