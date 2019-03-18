@@ -3,7 +3,7 @@
 //
 
 // NPC specific
-NPC_DB = './data/npcs.json'
+NPC_DB = '../data/npcs.json'
 
 // Game clock specific
 //CLOCK_SECS_PER_TICK = 10
