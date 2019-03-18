@@ -9,9 +9,9 @@ const ApiModel = require('../models/api-resp')
 //
 // Send a single entity
 //
-exports.sendOne = function(res, apiMsg, gameMsg, entity, entityId, code = 200) {
-  let entities = [ new ApiModel.ApiEntity(entityId, entity) ]
-  res.status(code).send(new ApiModel.ApiResponse(apiMsg, gameMsg, entities))
+exports.sendOne = function(res, apiMsg, gameMsg, entity, code = 200) {
+  //let entities = [ entity ]
+  res.status(code).send(new ApiModel.ApiResponse(apiMsg, gameMsg, [ entity ]))
 }
 
 //

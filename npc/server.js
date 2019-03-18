@@ -35,6 +35,12 @@ expressSwagger(swaggerOptions)
 
 console.log(require('path').join(__dirname, NPC_DB));
 
+// NPC clock
+setInterval(() => {
+  //console.log("TICK!");
+  
+}, 3000);
+
 
 // Start the server
 var server = app.listen(port, function () {

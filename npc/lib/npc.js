@@ -1,71 +1,24 @@
 const fs = require('fs')
 const NameGenerator = require('../../shared/lib/name-gen')
 const RPG = require('../../shared/lib/rpg')
-const BaseAttributes = require('../../shared/models/base-atrributes')
+const GameAttributes = require('../../shared/models/game-atrributes')
+const Entity = require('../../shared/models/entity')
 require('../../shared/consts')
 
 var templateDB = null
 
 class NPC {
   constructor(type) {
-    // Mixin the abstract agent properties with this NPC
-    Object.assign( this, new BaseAttributes() )
+    // IMPORTANT EVERY ENTITY MUST DO THIS!
+    Object.assign(this, new Entity())
 
-    this.name = 'Nameless'
-    this.type = type
-    this.dead = false
-    this.shortDesc = ''
-    
-    this.moveChance = 0
-  }
+    // Common entity fields
+    this.label = 'npc'    // Pretty damn important
+    this.name = type      // Slightly confusing, we store type in the name field
+    this.description = '' // Update this later
 
-  toString() {
-    return this.describeShort()
-  }
-
-  describeVerbose() {
-    let hpPerc = this.hp / this.maxHp
-    if(this.dead) return `A dead ${this.describeShort()} who was named '${this.name}'`
-    if(hpPerc <= 0.2) return `A ${this.describeShort()} named '${this.name}' and looks near death`
-    if(hpPerc <= 0.4) return `A ${this.describeShort()} named '${this.name}' and seems badly hurt`
-    if(hpPerc <= 0.6) return `A ${this.describeShort()} named '${this.name}' and has minor injuries`
-    if(hpPerc <= 0.8) return `A ${this.describeShort()} named '${this.name}' and has a few cuts & bruises`
-    if(hpPerc >  0.8) return `A ${this.describeShort()} named '${this.name}' and looks unharmed`
-  }
-
-  describeShort() {
-    return `${this.shortDesc} ${this.type}`
-  }
-
-  takeDamage(dam) {
-    if(this.dead) return "They are already dead!"
-    let phyBonus = Math.floor(this.phy / 10)
-    let actualDam = Math.max(0, dam - this.arm - phyBonus)
-    //console.log(`### DEBUG takeDamage: DAM:${dam} - ARM:${this.arm} - PHY:${phyBonus} = ${actualDam}`);
-    
-    if(actualDam <= 0) {
-      return "Your blow has no effect"
-    }
-
-    this.hp = this.hp - actualDam
-    if(this.hp <= 0) {
-      this.kill()
-      return `The ${this.type} is slain by your blow!`
-    }
-    
-    return `You strike and damage the ${this.type}`
-  } 
-
-  moveTo(locId) {
-    return `The ${this.type} leaves ${locId}` 
-  }
-
-  kill() {
-    this.hp = 0
-    this.dead = true
-  }
-
-  static create(type) {
+    // Load the NPC templates
+    // Probably need a better way of handling/caching this
     let dbPath = require('path').join(__dirname, NPC_DB)
     if(!templateDB) templateDB = JSON.parse(fs.readFileSync(dbPath))
 
@@ -74,35 +27,82 @@ class NPC {
       throw new Error(`Unable to create NPC of type: ${type}`)
     }
 
-    let npc = new this(type)
-    npc.str = RPG.parseDice(template.str)
-    npc.phy = RPG.parseDice(template.phy)
-    npc.cmb = RPG.parseDice(template.cmb)
-    npc.agl = RPG.parseDice(template.agl)
-    npc.men = RPG.parseDice(template.men)
-
-    npc.hp = RPG.parseDice(template.hp)
-    npc.maxHp = npc.hp
-    npc.arm = RPG.parseDice(template.arm)
-    npc.gold = RPG.parseDice(template.gold)
-
-    let ng = new NameGenerator()
-    npc.name = ng.name()
-    npc.shortDesc = ng.simpleDesc()
-    npc.moveChance = template.moveChance
+    // This entity has game attributes
+    Object.assign(this, new GameAttributes())
+    this.str = RPG.parseDice(template.str)
+    this.phy = RPG.parseDice(template.phy)
+    this.cmb = RPG.parseDice(template.cmb)
+    this.agl = RPG.parseDice(template.agl)
+    this.men = RPG.parseDice(template.men)
+    this.hp = RPG.parseDice(template.hp)
+    this.maxHp = this.hp
+    this.def = RPG.parseDice(template.def)
+    this.gold = RPG.parseDice(template.gold)
     
-    return npc
+    // NPC specific fields
+    let nameGen = new NameGenerator()
+    this.moveChance = template.moveChance
+    this.npcName = nameGen.name()
+    this.npcDesc = nameGen.simpleDesc()
+    this.dead = false
+
+    this.updateDescription()
   }
 
-  static hydrateFromGremlin(gremlinRes) {
-    return NPC.hydrate(gremlinRes[0].properties.jsonString[0].value)
+  //
+  // For debugging
+  //
+  toString() {
+    return `${this.npcDesc} ${this.npcName}`
   }
 
-  static hydrate(jsonString) {
-    let data = JSON.parse(jsonString)
-    let npc = new this(data.type)
-    Object.assign( npc, data )
-    return npc
+  //
+  // Update the description based on name and health
+  //
+  updateDescription() {
+    let hpPerc = this.hp / this.maxHp
+    if(this.dead) {
+      this.description = `A dead ${this.npcDesc} ${this.name} who was named '${this.npcName}'`
+      return
+    }
+    if(hpPerc <= 0.2) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and looks near death`; return }
+    if(hpPerc <= 0.4) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and seems badly hurt`; return }
+    if(hpPerc <= 0.6) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and has minor injuries`; return }
+    if(hpPerc <= 0.8) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and has a few cuts & bruises`; return; }
+    if(hpPerc >  0.8) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and looks unharmed`; return }
+  }
+
+  //
+  // Try to damage this NPC, it might not have any effect
+  //
+  takeDamage(dam) {
+    if(this.dead) return "They are already dead!"
+    let phyBonus = Math.floor(this.phy / 10)
+    let actualDam = Math.max(0, dam - this.def - phyBonus)
+    console.log(`### DEBUG takeDamage: DAM:${dam} - DEF:${this.def} - PHY:${phyBonus} = ${actualDam}`);
+    
+    if(actualDam <= 0) {
+      return "Your blow has no effect"
+    }
+
+    this.hp = this.hp - actualDam
+    if(this.hp <= 0) {
+      this.kill()
+      return `The ${this.name} is slain by your blow!`
+    }
+    
+    this.updateDescription()
+    
+    return `You strike and damage the ${this.name}`
+  } 
+
+  //
+  // Rest in peace 
+  //
+  kill() {
+    this.hp = 0
+    this.dead = true
+    this.updateDescription()
   }
 }
 

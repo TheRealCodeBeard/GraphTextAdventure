@@ -27,17 +27,25 @@ const gremlin = require('../../shared/lib/gremlin_wrapper')
  * @returns {Error} default - Unexpected error
  */
 router.post('/api/npcs/create', async function (req, res, next) {
-  let type = req.body.type;
-  let locationId = req.body.locationId;
-
   try {
+    // Get input properties and validate
+    let type = req.body.type;
+    let locationId = req.body.locationId;
     if(!type) throw new Error(`type missing`);
     if(!locationId) throw new Error(`locationId missing`);
 
-    let npc = NPC.create(type)
-    let gremlinRes = await gremlin.create_npc(npc, locationId)
+    // Create a new NPC - it will have no id yet
+    let npc = new NPC(type)
+    
+    // Store in graph
+    let gremlinRes = await gremlin.create_entity_in_loc(npc, locationId)
+    // As we're creating push the returned id into object 
+    npc.id = gremlinRes[0].id
+
     debug(`Created NPC ${gremlinRes[0].id} in location ${locationId}`)
-    API.sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id)
+    
+    // Send back the NPC in an API payload with a message
+    API.sendOne(res, "success", `A ${npc.npcDesc} ${npc.name} spawns`, npc)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString());
@@ -57,36 +65,12 @@ router.post('/api/npcs/create', async function (req, res, next) {
 router.get('/api/npcs/:id', async function (req, res, next) {
   try {
     debug(`Fetching NPC ${req.params.id}`)
-    let gremlinRes = await gremlin.get_npcs('id', req.params.id)
+    let gremlinRes = await gremlin.get_entities('npc', 'id', req.params.id)
     if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
-    
-    let npc = NPC.hydrateFromGremlin(gremlinRes)
-    API.sendOne(res, "success", "", npc, req.params.id)
-  } catch(e) {
-    console.error(`### ERROR: ${e.toString()}`);
-    API.send500(res, e.toString())
-  }
-})
-
-
-/**
- * Describe an NPC
- * @route GET /npcs/{id}/describe
- * @group NPCs - Operations on NPCs
- * @param {string} id.path.required - The id of the NPC
- * @returns {ApiResp.model} 200 - An ApiResp object
- * @returns {Error} 404 - NPC not found
- * @returns {Error} default - Unexpected error
- */
-router.get('/api/npcs/:id/describe', async function (req, res, next) {
-  try {
-    debug(`Describing NPC ${req.params.id}`)
-    let gremlinRes = await gremlin.get_npcs('id', req.params.id)
-    if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
-    
-    let npc = NPC.hydrateFromGremlin(gremlinRes)
-    let desc = npc.describeVerbose()
-    API.sendOne(res, "success", desc, npc, req.params.id)
+  
+  
+    let npc = gremlin.rehydrate_entity(gremlinRes[0], NPC)
+    API.sendOne(res, "success", "", npc)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString())
@@ -104,11 +88,12 @@ router.get('/api/npcs/:id/describe', async function (req, res, next) {
 router.get('/api/npcs', async function (req, res, next) {
   debug(`Listing ALL NPCs`)
 
-  let gremlinResults = await gremlin.get_npcs('label', 'npc')
+  // we pass a redundant filter to fetch ALL npcs
+  let gremlinResults = await gremlin.get_entities('npc', 'label', 'npc')
   let entities = []
   for(let gremlinRes of gremlinResults) {
-    let npc = NPC.hydrate(gremlinRes.properties.jsonString[0].value)
-    entities.push({ id: gremlinRes.id, data: npc})
+    let npc = gremlin.rehydrate_entity(gremlinRes, NPC)
+    entities.push(npc)
   }
   API.sendArray(res, "success", "", entities)
 })
@@ -131,14 +116,15 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
     debug(`Damaging NPC ${req.params.id}`)
     if(!value) throw new Error(`value missing from body`)
 
-    let gremlinRes = await gremlin.get_npcs('id', req.params.id)
+    let gremlinRes = await gremlin.get_entities('npc', 'id', req.params.id)
     if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
     
-    let npc = NPC.hydrateFromGremlin(gremlinRes)
+    let npc = gremlin.rehydrate_entity(gremlinRes[0], NPC)
+    
     let msg = npc.takeDamage(value)
-    await gremlin.update_npc(req.params.id, npc)
+    await gremlin.update_entity(req.params.id, npc)
 
-    API.sendOne(res, "success", msg, npc, req.params.id)
+    API.sendOne(res, "success", msg, npc)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString())
@@ -161,7 +147,7 @@ router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
     await gremlin.query_promise("g.v('id', id).outE('label', 'in').drop()", {id: req.params.id})
     await gremlin.query_promise("g.v('id', id).addE('in').to( g.V('id', locationId) )", {id: req.params.id, locationId: req.params.locationId})
 
-    API.sendOne(res, "success", "The NPC moves to another location", null, null)
+    API.sendOne(res, "success", "The NPC moves to another location", null)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString())
@@ -174,4 +160,5 @@ function debug(m) {
   if(true)
     console.log(`### ${m}`)
 }
+
 module.exports = router
