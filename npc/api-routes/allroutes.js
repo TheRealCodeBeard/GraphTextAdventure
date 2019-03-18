@@ -1,10 +1,9 @@
 var express = require('express')
-var router = express.Router();
+var router = express.Router()
 const NPC = require('../lib/npc')
-const ApiModel = require('../../shared/models/api-resp')
-//const ApiModel = require('../../shared/models/api-resp')
+const API = require('../../shared/lib/api')
 
-const gremlin = require('../../shared/lib/gremlin_wrapper');
+const gremlin = require('../../shared/lib/gremlin_wrapper')
 
 /**
  * @typedef ApiResp
@@ -38,10 +37,10 @@ router.post('/api/npcs/create', async function (req, res, next) {
     let npc = NPC.create(type)
     let gremlinRes = await gremlin.create_npc(npc, locationId)
     debug(`Created NPC ${gremlinRes[0].id} in location ${locationId}`)
-    sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id)
+    API.sendOne(res, "success", `A ${npc.shortDesc} ${npc.type} spawns`, npc, gremlinRes[0].id)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
-    send500(res, e.toString());
+    API.send500(res, e.toString());
   }
 })
 
@@ -59,13 +58,13 @@ router.get('/api/npcs/:id', async function (req, res, next) {
   try {
     debug(`Fetching NPC ${req.params.id}`)
     let gremlinRes = await gremlin.get_npcs('id', req.params.id)
-    if(gremlinRes.length == 0) { send404(res, `NPC ${req.params.id} not found`); return }
+    if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
     
     let npc = NPC.hydrateFromGremlin(gremlinRes)
-    sendOne(res, "success", "", npc, req.params.id)
+    API.sendOne(res, "success", "", npc, req.params.id)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
-    send500(res, e.toString())
+    API.send500(res, e.toString())
   }
 })
 
@@ -83,14 +82,14 @@ router.get('/api/npcs/:id/describe', async function (req, res, next) {
   try {
     debug(`Describing NPC ${req.params.id}`)
     let gremlinRes = await gremlin.get_npcs('id', req.params.id)
-    if(gremlinRes.length == 0) { send404(res, `NPC ${req.params.id} not found`); return }
+    if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
     
     let npc = NPC.hydrateFromGremlin(gremlinRes)
     let desc = npc.describeVerbose()
-    sendOne(res, "success", desc, npc, req.params.id)
+    API.sendOne(res, "success", desc, npc, req.params.id)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
-    send500(res, e.toString())
+    API.send500(res, e.toString())
   }
 })
 
@@ -111,7 +110,7 @@ router.get('/api/npcs', async function (req, res, next) {
     let npc = NPC.hydrate(gremlinRes.properties.jsonString[0].value)
     entities.push({ id: gremlinRes.id, data: npc})
   }
-  sendArray(res, "success", "", entities)
+  API.sendArray(res, "success", "", entities)
 })
 
 
@@ -133,16 +132,16 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
     if(!value) throw new Error(`value missing from body`)
 
     let gremlinRes = await gremlin.get_npcs('id', req.params.id)
-    if(gremlinRes.length == 0) { send404(res, `NPC ${req.params.id} not found`); return }
+    if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
     
     let npc = NPC.hydrateFromGremlin(gremlinRes)
     let msg = npc.takeDamage(value)
     await gremlin.update_npc(req.params.id, npc)
 
-    sendOne(res, "success", msg, npc, req.params.id)
+    API.sendOne(res, "success", msg, npc, req.params.id)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
-    send500(res, e.toString())
+    API.send500(res, e.toString())
   }
 })
 
@@ -162,33 +161,14 @@ router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
     await gremlin.query_promise("g.v('id', id).outE('label', 'in').drop()", {id: req.params.id})
     await gremlin.query_promise("g.v('id', id).addE('in').to( g.V('id', locationId) )", {id: req.params.id, locationId: req.params.locationId})
 
-    sendOne(res, "success", "The NPC moves to another location", null, null)
+    API.sendOne(res, "success", "The NPC moves to another location", null, null)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
-    send500(res, e.toString())
+    API.send500(res, e.toString())
   }
 })
 
 // ================================================================================
-// Util functions here
-// ================================================================================
-
-function sendOne(res, apiMsg, gameMsg, npc, npcId, code = 200) {
-  let entities = [ new ApiModel.ApiEntity(npcId, npc) ]
-  res.status(code).send(new ApiModel.ApiResponse(apiMsg, gameMsg, entities))
-}
-
-function sendArray(res, apiMsg, gameMsg, entities, code = 200) {
-  res.status(code).send(new ApiModel.ApiResponse(apiMsg, gameMsg, entities))
-}
-
-function send500(res, apiMsg) {
-  res.status(500).send(new ApiModel.ApiResponse(apiMsg, "", []))
-}
-
-function send404(res, apiMsg) {
-  res.status(404).send(new ApiModel.ApiResponse(apiMsg, "", []))
-}
 
 function debug(m) {
   if(true)

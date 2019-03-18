@@ -1,6 +1,6 @@
 const fs = require('fs')
 const NameGenerator = require('../../shared/lib/name-gen')
-const Utils = require('../../shared/lib/utils')
+const RPG = require('../../shared/lib/rpg')
 const BaseAttributes = require('../../shared/models/base-atrributes')
 require('../../shared/consts')
 
@@ -25,16 +25,16 @@ class NPC {
 
   describeVerbose() {
     let hpPerc = this.hp / this.maxHp
-    if(this.dead) return `${this.describeShort()} called '${this.name}' and is dead`
-    if(hpPerc <= 0.2) return `${this.describeShort()} named '${this.name}' and looks near death`
-    if(hpPerc <= 0.4) return `${this.describeShort()} named '${this.name}' and seems badly hurt`
-    if(hpPerc <= 0.6) return `${this.describeShort()} named '${this.name}' and has minor injuries`
-    if(hpPerc <= 0.8) return `${this.describeShort()} named '${this.name}' and has a few cuts & bruises`
-    if(hpPerc >  0.8) return `${this.describeShort()} named '${this.name}' and looks unharmed`
+    if(this.dead) return `A dead ${this.describeShort()} who was named '${this.name}'`
+    if(hpPerc <= 0.2) return `A ${this.describeShort()} named '${this.name}' and looks near death`
+    if(hpPerc <= 0.4) return `A ${this.describeShort()} named '${this.name}' and seems badly hurt`
+    if(hpPerc <= 0.6) return `A ${this.describeShort()} named '${this.name}' and has minor injuries`
+    if(hpPerc <= 0.8) return `A ${this.describeShort()} named '${this.name}' and has a few cuts & bruises`
+    if(hpPerc >  0.8) return `A ${this.describeShort()} named '${this.name}' and looks unharmed`
   }
 
   describeShort() {
-    return `A ${this.shortDesc} ${this.type}`
+    return `${this.shortDesc} ${this.type}`
   }
 
   takeDamage(dam) {
@@ -66,7 +66,8 @@ class NPC {
   }
 
   static create(type) {
-    if(!templateDB) templateDB = JSON.parse(fs.readFileSync(NPC_DB))
+    let dbPath = require('path').join(__dirname, NPC_DB)
+    if(!templateDB) templateDB = JSON.parse(fs.readFileSync(dbPath))
 
     let template = templateDB.templates[type]
     if(!template) {
@@ -74,16 +75,16 @@ class NPC {
     }
 
     let npc = new this(type)
-    npc.str = Utils.parse(template.str)
-    npc.phy = Utils.parse(template.phy)
-    npc.cmb = Utils.parse(template.cmb)
-    npc.agl = Utils.parse(template.agl)
-    npc.men = Utils.parse(template.men)
+    npc.str = RPG.parseDice(template.str)
+    npc.phy = RPG.parseDice(template.phy)
+    npc.cmb = RPG.parseDice(template.cmb)
+    npc.agl = RPG.parseDice(template.agl)
+    npc.men = RPG.parseDice(template.men)
 
-    npc.hp = Utils.parse(template.hp)
+    npc.hp = RPG.parseDice(template.hp)
     npc.maxHp = npc.hp
-    npc.arm = Utils.parse(template.arm)
-    npc.gold = Utils.parse(template.gold)
+    npc.arm = RPG.parseDice(template.arm)
+    npc.gold = RPG.parseDice(template.gold)
 
     let ng = new NameGenerator()
     npc.name = ng.name()

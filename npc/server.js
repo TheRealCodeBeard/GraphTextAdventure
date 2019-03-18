@@ -3,6 +3,7 @@ require('dotenv').config()
 
 const express = require('express');
 const bodyParser = require('body-parser');
+require('../shared/consts')
 
 // Set up Express
 var app = express();
@@ -31,6 +32,9 @@ let swaggerOptions = {
 };
 const expressSwagger = require('express-swagger-generator')(app);
 expressSwagger(swaggerOptions)
+
+console.log(require('path').join(__dirname, NPC_DB));
+
 
 // Start the server
 var server = app.listen(port, function () {
