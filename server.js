@@ -104,7 +104,7 @@ app.get('/api/players', (req,res)=>{
 */
 
 //
-// API discovery, not used yet but when we have cross service
+// API discovery, NOT USED FOR ANYTHING YET! but needed when we have cross service calls
 //
 app.get('/.well-known/gta-metadata', async (req, res)=>{
     res.send({

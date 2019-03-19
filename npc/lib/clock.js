@@ -4,18 +4,19 @@
 
 const supertest = require('supertest'); // Allows calling of API routes internally 
 const RPG = require('../../shared/lib/rpg')
+const Server = require('../server')
 require('../../shared/consts')
-
-// Have to grab exported app instance from the server
-const app = require('../server').app
 
 let moveTick = 0
 
-
 async function npcClockLoop() {
+
   if(moveTick === 0) {
     console.log("### CLOCK: Checking for NPC movement");
     
+    // Server.app give us the main Express instance
+    // supertest lets us run/call HTTP routes through it
+    let app = Server.app
     let npcsResp = await supertest(app).get('/api/npcs')
     for(let npc of npcsResp.body.entities) {
       let willMove = RPG.skillCheck(npc.moveChance, 0)

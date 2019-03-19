@@ -2,8 +2,8 @@
 // Global and shared constants here
 //
 
-// NPC specific
-NPC_DB = '../data/npcs.json'
+// NPC specific settings
+NPC_TEMPLATES = './data/npcs.json'
 
 // Game clock specific
 //CLOCK_SECS_PER_TICK = 10

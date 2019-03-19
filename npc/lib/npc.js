@@ -1,11 +1,10 @@
-const fs = require('fs')
 const NameGenerator = require('../../shared/lib/name-gen')
 const RPG = require('../../shared/lib/rpg')
 const GameAttributes = require('../../shared/models/game-atrributes')
 const Entity = require('../../shared/models/entity')
+const Utils = require('../../shared/lib/utils')
+const Server = require('../server')
 require('../../shared/consts')
-
-var templateDB = null
 
 class NPC {
   constructor(type) {
@@ -17,12 +16,7 @@ class NPC {
     this.name = type      // Slightly confusing, we store type in the name field
     this.description = '' // Update this later
 
-    // Load the NPC templates
-    // Probably need a better way of handling/caching this
-    let dbPath = require('path').join(__dirname, NPC_DB)
-    if(!templateDB) templateDB = JSON.parse(fs.readFileSync(dbPath))
-
-    let template = templateDB.templates[type]
+    let template = Server.templateStore.templates[type]
     if(!template) {
       throw new Error(`Unable to create NPC of type: ${type}`)
     }

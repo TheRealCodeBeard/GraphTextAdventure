@@ -5,19 +5,22 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('../shared/consts')
 
+// ---- Common stuff most severs will do ----
+
+// Load config variables
+var PORT = process.env.PORT || 4000;
+var API_BASE_HOST = process.env.API_BASE_HOST || "http://localhost:3000";
+
 // Set up Express
 var app = express();
 app.use(bodyParser.json());
 
-
-// API routes
+// Plug in API routes
 let mainRoutes = require('./api-routes/allroutes');
 app.use('/', mainRoutes);
 
-// Server port
-var port = process.env.PORT || 4000;
+// ---- Auto generated Swagger is optional but nice ----
 
-// Set up Swagger generator
 let swaggerOptions = {
   swaggerDefinition: {
     info: {
@@ -25,25 +28,43 @@ let swaggerOptions = {
       title: 'Swagger',
       version: require('./package.json').version
     },
-    host: `localhost:${port}`,
+    host: `localhost:${PORT}`,
     basePath: '/api'
   },
   basedir: __dirname,
   files: ['./api-routes/**/*.js']
 };
 const expressSwagger = require('express-swagger-generator')(app);
-expressSwagger(swaggerOptions)
+expressSwagger(swaggerOptions);
 
-console.log(require('path').join(__dirname, NPC_DB));
+// ---- get API metadata from base server - NOT USED FOR ANYTHING YET! ----
 
-// Export the app so we can use it elsewhere, like inside ./lib/clock 
-exports.app = app
+require('axios').get(`${API_BASE_HOST}/.well-known/gta-metadata`)
+.then(resp => {
+  exports.METADATA = resp.data
+  console.error(`### Fetched API metadata ${exports.METADATA.version}`);
+})
+.catch(err => {
+  if(err)
+  console.error("### ERROR! Unable to fetch API metadata! Things will not be good");
+});
+
+// ---- NPC service specific code ----
+
+// Export the app so we can use it elsewhere
+exports.app = app;
 // Start the npcClockLoop 
-const clock = require('./lib/clock')
+const clock = require('./lib/clock');
 setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
 
-// Start the server
-var server = app.listen(port, function () {
+// Load the NPC templates, make them globally accessible / cached
+let templateFile = require('path').join(__dirname, NPC_TEMPLATES);
+exports.templateStore = JSON.parse(require('fs').readFileSync(templateFile));
+console.log(`### Loaded ${Object.keys(exports.templateStore.templates).length} NPC templates into templateStore`);
+
+// ---- Start the server ----
+
+var server = app.listen(PORT, function () {
   console.log(`### NPC API Server listening on ${server.address().port}`);
 });
 
