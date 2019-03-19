@@ -103,4 +103,16 @@ app.get('/api/players', (req,res)=>{
 });
 */
 
+//
+// API discovery, not used yet but when we have cross service
+//
+app.get('/.well-known/gta-metadata', async (req, res)=>{
+    res.send({
+        version: "1.0.0",
+        npcEndpoint: process.env.API_NPC_HOST || "http://localhost:4000",
+        playerEndpoint: process.env.API_PLAYER_HOST  || "http://localhost:5000",
+        godEndpoint: process.env.API_GOD_HOST || "http://localhost:6000"
+    })
+});
+
 app.listen(port, () => console.log(`Bloated old server listening on port ${port}!`));

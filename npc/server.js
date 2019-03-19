@@ -9,6 +9,7 @@ require('../shared/consts')
 var app = express();
 app.use(bodyParser.json());
 
+
 // API routes
 let mainRoutes = require('./api-routes/allroutes');
 app.use('/', mainRoutes);
@@ -35,12 +36,11 @@ expressSwagger(swaggerOptions)
 
 console.log(require('path').join(__dirname, NPC_DB));
 
-// NPC clock
-setInterval(() => {
-  //console.log("TICK!");
-  
-}, 3000);
-
+// Export the app so we can use it elsewhere, like inside ./lib/clock 
+exports.app = app
+// Start the npcClockLoop 
+const clock = require('./lib/clock')
+setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
 
 // Start the server
 var server = app.listen(port, function () {

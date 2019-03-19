@@ -147,7 +147,7 @@ router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
     await gremlin.query_promise("g.v('id', id).outE('label', 'in').drop()", {id: req.params.id})
     await gremlin.query_promise("g.v('id', id).addE('in').to( g.V('id', locationId) )", {id: req.params.id, locationId: req.params.locationId})
 
-    API.sendOne(res, "success", "The NPC moves to another location", null)
+    API.sendOne(res, "success", "The NPC moves to another location", {})
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString())

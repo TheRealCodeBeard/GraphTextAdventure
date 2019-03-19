@@ -102,16 +102,22 @@ let serialize_entity = function(entity) {
 //
 // Rehydrate any entity from Gremlin vertex result
 //
-let rehydrate_entity = function(gremlinRes, entityConstructor) {
-    let data = JSON.parse(gremlinRes.properties.data[0].value)
-    let type = gremlinRes.properties.name[0].value
-    let entity = new entityConstructor(type)
+let rehydrate_entity = function(vertex, entityConstructor) {
+    // Deserialise data
+    let data = JSON.parse(vertex.properties.data[0].value)
+    let name = vertex.properties.name[0].value
+    
+    // Construct new entity thing
+    let entity = new entityConstructor(name)
+    // Push in and overwrite with loaded/de-serialized data
     Object.assign(entity, data)
 
-    entity.id = gremlinRes.id
-    entity.label = gremlinRes.label
-    entity.name = type
-    entity.description = gremlinRes.properties.description[0].value
+    // Further mutate new object and push in special properties
+    entity.id = vertex.id
+    entity.label = vertex.label
+    entity.name = name
+    entity.description = vertex.properties.description[0].value
+
     return entity
 }
 

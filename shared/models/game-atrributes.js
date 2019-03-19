@@ -1,16 +1,15 @@
 class GameAttributes {
   constructor() {
-    this.gold = 0
+    this.str = 1    // Strength
+    this.phy = 1    // Physical toughness and constitution
+    this.cmb = 1    // Combat ability, ranged and melee
+    this.agl = 1    // Agility and dexterity 
+    this.men = 1    // Mental capability and intelligence 
 
-    this.str = 1
-    this.phy = 1
-    this.cmb = 1
-    this.agl = 1
-    this.men = 1
-
-    this.maxHp = 1
-    this.hp    = 1
-    this.def   = 0
+    this.maxHp = 1  // Starting or maximum hit points
+    this.hp    = 1  // Current hit points
+    this.arm   = 0  // Defence / armour
+    this.gold = 0   // Gold, not used for anything!
   }
 }
 

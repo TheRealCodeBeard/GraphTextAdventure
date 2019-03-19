@@ -39,7 +39,7 @@
       "gold": "d(1, 4)",
       "def":  "0 + d(1, 4)",
 
-      "moveChance": 50
+      "moveChance": 20
     }    
   }
 }
