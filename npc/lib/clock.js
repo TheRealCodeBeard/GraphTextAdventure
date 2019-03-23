@@ -5,6 +5,7 @@
 const supertest = require('supertest'); // Allows calling of API routes internally 
 const RPG = require('../../shared/lib/rpg')
 const Server = require('../server')
+const axios = require('axios')
 require('../../shared/consts')
 
 let moveTick = 0
@@ -14,16 +15,21 @@ async function npcClockLoop() {
   if(moveTick === 0) {
     console.log("### CLOCK: Checking for NPC movement");
     
-    // Server.app give us the main Express instance
-    // supertest lets us run/call HTTP routes through it
-    let app = Server.app
-    let npcsResp = await supertest(app).get('/api/npcs')
-    for(let npc of npcsResp.body.entities) {
-      let willMove = RPG.skillCheck(npc.moveChance, 0)
-      console.log(`${npc.name} ${npc.id} Moving: ${willMove}`);
-      if(willMove) {
-        let moveResp = await supertest(app).put(`/api/npcs/${npc.id}/move/b80c8112-f389-49a7-8cf6-4aad3b3ec601`)
+    try {
+      // Server.app give us the main Express instance
+      // supertest lets us run/call HTTP routes through it
+      let app = Server.app
+      let npcsResp = await axios.get(`${Server.METADATA.npcEndpoint}/api/npcs`)
+      for(let npc of npcsResp.data.entities) {
+        let willMove = RPG.skillCheck(npc.moveChance, 0)
+        console.log(`${npc.name} ${npc.id} Moving: ${willMove}`);
+        if(willMove) {
+          await axios.put(`${Server.METADATA.npcEndpoint}/api/npcs/${npc.id}/move/b80c8112-f389-49a7-8cf6-4aad3b3ec601`)
+        }
       }
+    } catch(e) {
+      console.error(`### ERROR: Badness trying to move NPCs ${e}`);
+      
     }
   }
 

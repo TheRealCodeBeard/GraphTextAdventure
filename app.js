@@ -14,8 +14,13 @@ const colors = require('colors');//npm install colors
 const http = require('http');
 const config = require("./config");//copy config_template.js as config.js and fill in your settings.
 const gwr = require("./shared/lib/gremlin_wrapper.js");
+const gwr2 = require("./shared/lib/gremlin-wrapper-v2");
 const query = gwr.query;
 const axios = require('axios')
+
+const Player = require('./shared/lib/player')
+const Room = require('./shared/lib/room')
+const Item = require('./shared/lib/item')
 
 //Write to the console in the debug colour.
 let debug = function(text){ console.log(text.grey); };
@@ -96,27 +101,22 @@ let make_room = function(words,next){
     let direction = words[3];
     if(world.possibleDirections[direction]){
         info("Checking...");
-        getExits((rooms)=>{
+        getExits(async (rooms)=>{
             if(rooms.some(r=>r.label===direction)){
                 info(`There is already a room to the ${direction.white}.`);
                 info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
                 next();
             } else {
-                info(`OK. Building Room to the ${direction.white}...`);
+                info(`OK. Building room to the ${direction.white}...`);
                 let opposite = world.possibleDirections[direction];
                 debug(`Return door to: ${opposite}.`);
-                query("g.addV('room').property('made','node app').addE(opp).to(g.V('id',playerRoomId))",
-                    {opp:opposite, playerRoomId:world.playerCurrentRoomID},
-                    (newEdges)=>{
-                        info(`Connecting door to current room...`);
-                        query("g.V('id',playerRoomId).addE(dir).to(g.V('id',newRoomId))",
-                        {playerRoomId:world.playerCurrentRoomID,dir:direction,newRoomId:newEdges[0].outV},
-                        (result)=>{
-                            info(`Connected door to current room`);
-                            next();
-                        });
-                    }
-                );
+
+                let rnd = Math.floor(Math.random() * Math.floor(10000));
+                let newRoom = new Room(`room ${rnd}`, 'An empty room');
+                let result = await gwr2.createEntityLinkedTo(newRoom, opposite, world.playerCurrentRoomID)
+                newRoom.id = result[0].id;
+                await gwr2.createLinkTo(world.playerCurrentRoomID, direction, newRoom.id)
+                next();
             }
         });
     } else {
@@ -126,16 +126,15 @@ let make_room = function(words,next){
     } 
 };
 
-let make_item = function(words,next){
-    let item = words[2];
+let make_item = async function(words,next){
+    let itemName = words[2];
     let desc = words.slice(3).join(" ");
-    debug(`Making a(n) '${item}': '${desc}'`);
-    query("g.addV('item').property('made','node app').property('description',description).property('name',name).addE('holds').from(g.V('id',playerRoomId))",
-        {playerRoomId:world.playerCurrentRoomID,description:desc,name:item},
-        (result)=>{
-            info(`item '${item}' made`)
-            next();
-        });
+    debug(`Making a(n) '${itemName}': '${desc}'`);
+
+    let item = new Item(itemName, desc);
+    let result = await gwr2.createEntityLinkedFrom(item, 'holds', world.playerCurrentRoomID);
+    item.id = result[0].id;
+    next();
 };
 
 let make_npc = function(words, next){
@@ -481,16 +480,25 @@ let act = function(command, next){
 */
 
 //Creates a player in a room if the player doesn't exist
-let bootstrap = function(next){
+let bootstrap = async function(next){
+    // (BC) New version
     world.playerName = "First Player (for testing)";
-    query("g.addV('player').property('name',playerName).addE('in').to(g.addV('room'))",
-        {playerName:world.playerName},
-        (newEdges)=>{
-            world.playerNodeID = newEdges[0].outV;
-            info(`Your player ID is: '${ world.playerNodeID}' put this in config.js as 'config.playerVectorID'`);
-            debug(`new room '${newEdges[0].inV}'`)
-            next();
-        });
+    
+    let room = new Room('start', 'The starting room');
+    let result = await gwr2.createEntity(room);
+    room.id = result[0].id;
+    info(`In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move`);
+    info(`The universe now contains one room: '${room.id}'`);
+
+    let player = new Player('First Player', 'A test player');
+    result = await gwr2.createEntityLinkedTo(player, 'in', room.id);
+    player.id = result[0].id
+    world.playerNodeID = player.id;
+
+    info(`##########################################################################################`);
+    info(`Your player ID is: '${world.playerNodeID}' put this in config.js as 'config.playerVectorID'`);
+    info(`And then restart the app`);
+    process.exit(0)
 };
 
 //Gets the player node id from the graph
@@ -549,7 +557,7 @@ let setup = function(next){
 //It is asnyc and recursive to work with RL and Graph APIs.
 let interactive = function(finalise){
     rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n>`.green,(response)=>{
-        if(response === "quit") finalise();//This is the recursion exit.
+        if(response === "quit" || response === "exit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
     });
 };

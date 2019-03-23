@@ -56,14 +56,14 @@ class NPC {
   updateDescription() {
     let hpPerc = this.hp / this.maxHp
     if(this.dead) {
-      this.description = `A dead ${this.npcDesc} ${this.name} who was named '${this.npcName}'`
+      this.description = `A dead ${this.npcDesc} ${this.name} who was called '${this.npcName}'`
       return
     }
-    if(hpPerc <= 0.2) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and looks near death`; return }
-    if(hpPerc <= 0.4) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and seems badly hurt`; return }
-    if(hpPerc <= 0.6) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and has minor injuries`; return }
-    if(hpPerc <= 0.8) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and has a few cuts & bruises`; return; }
-    if(hpPerc >  0.8) { this.description = `A ${this.npcDesc} ${this.name} named '${this.npcName}' and looks unharmed`; return }
+    if(hpPerc <= 0.2) { this.description = `A ${this.npcDesc} ${this.name}, called '${this.npcName}'. They look near death`; return }
+    if(hpPerc <= 0.4) { this.description = `A ${this.npcDesc} ${this.name}, called '${this.npcName}'. They seem badly hurt`; return }
+    if(hpPerc <= 0.6) { this.description = `A ${this.npcDesc} ${this.name}, called '${this.npcName}'. They have minor injuries`; return }
+    if(hpPerc <= 0.8) { this.description = `A ${this.npcDesc} ${this.name}, called '${this.npcName}'. They have a few cuts & bruises`; return; }
+    if(hpPerc >  0.8) { this.description = `A ${this.npcDesc} ${this.name}, called '${this.npcName}'. They appear unharmed`; return }
   }
 
   //

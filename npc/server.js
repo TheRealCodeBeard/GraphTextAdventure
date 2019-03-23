@@ -54,8 +54,8 @@ require('axios').get(`${API_BASE_HOST}/.well-known/gta-metadata`)
 // Export the app so we can use it elsewhere
 exports.app = app;
 // Start the npcClockLoop 
-const clock = require('./lib/clock');
-setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
+//const clock = require('./lib/clock');
+//setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
 
 // Load the NPC templates, make them globally accessible / cached
 let templateFile = require('path').join(__dirname, NPC_TEMPLATES);
