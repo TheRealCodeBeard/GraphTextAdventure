@@ -13,11 +13,12 @@ node ../god/server.js &
 node ../player/server.js &
 
 # Old server
-node ../server.js &
+cd ..
+node server.js &
 
 # Now the console app
 sleep 1
-node ../app.js
+node app.js
 
 echo "Killing old servers..."
 pkill -f server.js

@@ -12,7 +12,7 @@ let mainRoutes = require('./api-routes/allroutes');
 app.use('/', mainRoutes);
 
 // Server port
-var port = process.env.PORT || 6000;
+var port = process.env.PORT || 7000;
 
 // Start the server
 var server = app.listen(port, function () {

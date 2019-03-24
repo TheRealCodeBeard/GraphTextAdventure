@@ -324,25 +324,34 @@ let look_api = function(next){
 let take = function(words,next){
     let desired = words[1];
     debug(`you want the '${desired}'`);
-    getItems(items=>{
+    getItems(async items=>{
         if(items.length){
             let found = items.filter(e=>(e.properties.name[0].value===desired));
             if(found.length===1){
                 let item = found[0];
-                debug(JSON.stringify(item.id));
-                info(`You reach out for the '${item.properties.name[0].value}'`);
-                query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
-                    {itemid:item.id},
-                    (results)=>{
-                        info(`You grasp the '${item.properties.name[0].value}'`);
-                        query("g.v('id',playerId).addE('holds').to(g.v('id',itemid))",
-                            {playerId:world.playerNodeID,itemid:item.id},
-                            (results)=>{
-                                info(`The '${item.properties.name[0].value}' is now yours!`);
-                                next();
-                            }
-                        );
-                    });
+
+                try {
+                    await gwr2.moveEntityIn(item.id, 'holds', world.playerNodeID);
+                    info(`The ${desired} is now yours!`);
+                } catch(e) {
+                    info(`You fail to pick up the ${desired}`);
+                }
+                next();
+
+                // debug(JSON.stringify(item.id));
+                // info(`You reach out for the '${item.properties.name[0].value}'`);
+                // query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
+                //     {itemid:item.id},
+                //     (results)=>{
+                //         info(`You grasp the '${item.properties.name[0].value}'`);
+                //         query("g.v('id',playerId).addE('holds').to(g.v('id',itemid))",
+                //             {playerId:world.playerNodeID,itemid:item.id},
+                //             (results)=>{
+                //                 info(`The '${item.properties.name[0].value}' is now yours!`);
+                //                 next();
+                //             }
+                //         );
+                //     });
             } else {
                 info(`There there is no '${desired}'`);
                 next();//next here to prevent 'fall through'

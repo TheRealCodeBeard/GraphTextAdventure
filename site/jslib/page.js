@@ -114,7 +114,7 @@ let debug_room = function(guid){
     fetch(`${god_root}/api/room/${guid}/look`)
         .then(response=>response.json())
         .then(data=>{
-            document.getElementById('debug').innerHTML = `Entity ID: <b>${guid}</b><pre>${data.gameMsg}</pre>`
+            document.getElementById('debug').innerHTML = `Room: ${guid}\n\n${data.gameMsg}`
         })
 };
 
@@ -122,7 +122,8 @@ let debug_entity = function(guid){
     fetch(`${god_root}/api/entities/${guid}`)
         .then(response=>response.json())
         .then(data=>{
-            document.getElementById('debug').innerHTML = `Entity ID: <b>${guid}</b><pre>${JSON.stringify(data.entities[0], null, 2)}</pre>`
+            document.getElementById('debug').innerHTML = JSON.stringify(data.entities[0], null, 2)
+            hljs.highlightBlock(document.getElementById('debug'));
         })
 };
 
@@ -155,7 +156,7 @@ let go = function(){
                     else
                         debug_entity(evt.target.data().id);
                 } else {
-                    document.getElementById('debug').innerHTML = ``
+                    document.getElementById('debug').innerHTML = ''
                 }
             })
 

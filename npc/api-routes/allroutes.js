@@ -39,8 +39,7 @@ router.post('/api/npcs/create', async function (req, res, next) {
     
     // Store in graph
     let gremlinRes = await gremlin.createEntityLinkedTo(npc, 'in', locationId)
-
-    console.log(gremlinRes);
+    if(!gremlinRes || gremlinRes.length == 0) throw new Error('No results, locationId probably does not exist')
     
     // As we're creating, push the returned id into the NPC object
     npc.id = gremlinRes[0].id
@@ -146,8 +145,9 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
  */
 router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
   try {
-    await gremlin.query("g.v('id', id).outE('label', 'in').drop()", {id: req.params.id})
-    await gremlin.query("g.v('id', id).addE('in').to( g.V('id', locationId) )", {id: req.params.id, locationId: req.params.locationId})
+    // await gremlin.query("g.v('id', id).outE('label', 'in').drop()", {id: req.params.id})
+    // await gremlin.query("g.v('id', id).addE('in').to( g.V('id', locationId) )", {id: req.params.id, locationId: req.params.locationId})
+    await gremlin.moveEntityOut(req.params.id, 'in', req.params.locationId)
 
     API.sendOne(res, "success", "The NPC moves to another location", {})
   } catch(e) {

@@ -33,7 +33,7 @@ let gremlin_query_promise = function(query, parameters) {
 
 //This returns the current graph as a nodes and edges object
 let return_current_graph = function(next){
-    gremlin_query("g.V().map(values('id','label','description').fold())",null,(node_results)=>{
+    gremlin_query("g.V().map(values('id','label','description','name').fold())",null,(node_results)=>{
         gremlin_query("g.E()",null,(edge_results)=>{
             next({
                 nodes:node_results,

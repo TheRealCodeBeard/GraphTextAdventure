@@ -5,11 +5,12 @@ content-type: application/json
 
 {
   "type": "goblin",
-  "locationId": "fbf9a3d2-52dc-40fc-a3a1-b17874b79c46"
+  "locationId": "c7dfc9b8-27a8-4b99-b9ff-3ebe654136ae"
 }
 
 ### Get new NPC id
 @agentId = {{create.response.body.$.entities[0].id}}
+@newLocation = 464bff8e-08d1-4631-90d2-abab98643677
 
 ### Get NPC  
 GET http://localhost:4000/api/npcs/{{agentId}}
@@ -26,4 +27,4 @@ content-type: application/json
 }
 
 ### Move a NPC somewhere
-PUT http://localhost:4000/api/npcs/{{agentId}}/move/b9a19fc6-405f-495d-8e0e-f68d67529ddb
+PUT http://localhost:4000/api/npcs/{{agentId}}/move/464bff8e-08d1-4631-90d2-abab98643677

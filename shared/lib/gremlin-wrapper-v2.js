@@ -60,11 +60,11 @@ let rehydrateEntity = function(vertex, entityConstructor) {
 }
 
 let createEntityLinkedTo = function(entity, linkLabel, linkedToId) { 
-    return query(`g.addV(label).as('x')
+    return query(`g.addV(label).as('newEntity')
         .property('name', type)
         .property('description', description)
         .property('data', data)
-        .addE(linkLabel).to( g.V('id', linkedToId) ).outV()`,
+        .addE(linkLabel).to( g.V('id', linkedToId) ).select('newEntity')`,
         { 
             label: entity.label,
             linkLabel: linkLabel, 
@@ -76,11 +76,11 @@ let createEntityLinkedTo = function(entity, linkLabel, linkedToId) {
 };
 
 let createEntityLinkedFrom = function(entity, linkLabel, linkedFromId) { 
-    return query(`g.addV(label).as('x')
+    return query(`g.addV(label).as('newEntity')
         .property('name', type)
         .property('description', description)
         .property('data', data)
-        .addE(linkLabel).from( g.V('id', linkedFromId) ).outV()`,
+        .addE(linkLabel).from( g.V('id', linkedFromId) ).select('newEntity')`,
         { 
             label: entity.label,
             linkLabel: linkLabel, 
@@ -111,31 +111,45 @@ let getEntities = function(label, propFilter, propFilterValue) {
     )
 }
 
-let getEntitiesIn = function(sourceId, linkLabel) {
+let getEntitiesIn = function(id, linkLabel) {
     return query(
-        `g.v(sourceId).inE().hasLabel(linkLabel).outV()`, 
-        { sourceId: sourceId, linkLabel: linkLabel }
+        `g.v(id).inE().hasLabel(linkLabel).outV()`, 
+        { id: id, linkLabel: linkLabel }
     )
 }
 
-let getEntitiesOut = function(sourceId, linkLabel) {
+let getEntitiesOut = function(id, linkLabel) {
     return query(
-        `g.v(sourceId).outE().hasLabel(linkLabel).inV()`, 
-        { sourceId: sourceId, linkLabel: linkLabel }
+        `g.v(id).outE().hasLabel(linkLabel).inV()`, 
+        { id: id, linkLabel: linkLabel }
     )
 }
 
 let updateEntity = function(id, entity) { 
     return query(
-        `g.v().hasLabel(label).has('id', id)
+        `g.v(id).hasLabel(label)
         .property('description', description)
         .property('data', data)`, 
         { label: entity.label, id: id, data: serializeEntity(entity), description: entity.description }
     )
 }
 
+let moveEntityOut = function(id, linkLabel, destId) { 
+    return query("g.v(id).outE('label', linkLabel).drop()", {id: id, linkLabel: linkLabel })
+    .then(r => {
+        return query("g.v(id).addE(linkLabel).to( g.V('id', destId) )", {id: id, linkLabel: linkLabel, destId: destId})
+    })
+}
+
+let moveEntityIn = function(id, linkLabel, destId) { 
+    return query("g.v(id).inE('label', linkLabel).drop()", {id: id, linkLabel: linkLabel })
+    .then(r => {
+        return query("g.v(id).addE(linkLabel).to( g.V('id', destId) )", {id: id, linkLabel: linkLabel, destId: destId})
+    })
+}
+
 let createLinkTo = function(sourceId, linkLabel, destId) {
-    return query(`g.V('id', sourceId).addE(linkLabel).to(g.V('id', destId))`,
+    return query(`g.V(sourceId).addE(linkLabel).to(g.V(destId))`,
         { 
             linkLabel: linkLabel, 
             sourceId: sourceId, 
@@ -143,12 +157,16 @@ let createLinkTo = function(sourceId, linkLabel, destId) {
         });
 };
 
+
 exports.query = query
 exports.serializeEntity = serializeEntity
 exports.rehydrateEntity = rehydrateEntity
 exports.createEntity = createEntity
 exports.getEntities = getEntities
+
 exports.updateEntity = updateEntity
+exports.moveEntityIn = moveEntityIn
+exports.moveEntityOut = moveEntityOut
 
 exports.createEntityLinkedTo = createEntityLinkedTo
 exports.createEntityLinkedFrom = createEntityLinkedFrom

@@ -7,36 +7,53 @@ const gremlin = require('../../shared/lib/gremlin-wrapper-v2');
 const API = require('../../shared/lib/api')
 
 router.get('/api/room/:id/look', async (req,res) => {
-    
-    let entities = []
-    // Handle the room itself
-    let results = await gremlin.getEntities('room', 'id', req.params.id);
-    let room = gremlin.rehydrateEntity(results[0], Entity)
-    entities.push(room)
-    let desc = `You are in: ${room.description}\n`;
+    try {
+        // Array of stuff we find to send back over the API
+        let entities = []
 
-    // The things "in" the room (players and NPCs)
-    results = await gremlin.getEntitiesIn(req.params.id, 'in');
-    desc += listEntities(results, "You can see:", "", entities)
+        // Handle the room itself
+        let results = await gremlin.getEntities('room', 'id', req.params.id);
+        let room = gremlin.rehydrateEntity(results[0], Entity)
+        entities.push(room)
+        let desc = `You are in: ${room.description}\n`;
 
-    // The things "held" by the room (items)
-    results = await gremlin.getEntitiesOut(req.params.id, 'holds');
-    desc += listEntities(results, "At your feet there are:", "", entities)
+        // The things "in" the room (players and NPCs)
+        results = await gremlin.getEntitiesIn(req.params.id, 'in');
+        desc += describeEntities(results, "You can see:", "", entities)
 
-    // And the exits
-    desc += "There are exits: "
-    results = await gremlin.query("g.v(id).outE().where(inV().hasLabel('room'))", {id: req.params.id});
-    desc += results.map(d => d.label).join(", ")
-    // We fake the exits into pseodo entities even though they do not have names or descriptions (yet)
-    results.map(d => entities.push({ id: d.id, label: d.label, name: "exit", description: d.label }))
+        // The things "held" by the room (items)
+        results = await gremlin.getEntitiesOut(req.params.id, 'holds');
+        desc += describeEntities(results, "At your feet there are:", "", entities)
 
-    // We could send all the entities back, but 
-    API.sendArray(res, "success", desc, entities);
+        // And the exits
+        desc += "There are exits: "
+        results = await gremlin.query("g.v(id).outE().where(inV().hasLabel('room'))", {id: req.params.id});
+        desc += results.map(d => d.label).join(", ")
+        // We fake the exits into pseudo entities even though they do not have names or descriptions (yet)
+        results.map(d => entities.push({ id: d.id, label: d.label, name: "exit", description: d.label }))
+
+        // Send it back
+        API.sendArray(res, "success", desc, entities);
+    } catch(e) {
+        console.error(`### ERROR: ${e.toString()}`);
+        API.send500(res, e.toString())
+    }
+});
+
+router.get('/api/entities/:id', async (req,res) => {
+    try {
+        let results = await gremlin.query("g.v(id)", {id: req.params.id});
+        let e = gremlin.rehydrateEntity(results[0], Entity);
+        API.sendOne(res, "success", "", e);
+    } catch(e) {
+        console.error(`### ERROR: ${e.toString()}`);
+        API.send500(res, e.toString())
+    }
 });
 
 // =================================================================
 
-function listEntities(results, prefixText, nothingText, entities) {
+function describeEntities(results, prefixText, nothingText, entities) {
     let desc = ""
 
     // You here, but are alone
