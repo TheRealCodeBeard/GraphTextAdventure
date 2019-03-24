@@ -1,0 +1,12 @@
+{
+  "port": 443,
+  "endpoint": "CHANGEME.gremlin.cosmos.azure.com",
+  "primaryKey": "CHANGEME",
+  "database": "CHANGEME",
+  "collection": "CHANGEME",
+  "playerVectorID": "CHANGEME",
+  "baseURL": "http://localhost:3000",
+  "npcURL": "http://localhost:4000",
+  "playerURL": "http://localhost:5000",
+  "godURL": "http://localhost:7000"
+}

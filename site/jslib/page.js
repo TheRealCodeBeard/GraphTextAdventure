@@ -159,6 +159,7 @@ let go = function(){
                     document.getElementById('debug').innerHTML = ''
                 }
             })
+            cy.fit()
 
             lod.innerHTML="";
         })

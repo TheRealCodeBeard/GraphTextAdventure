@@ -5,11 +5,11 @@ body {
 
 #cy {
   width: 100%;
-  height: 60%;
-  display: block;
+  height: 92%;
   border:solid 1px black;
   background-color: white;
 }
+
 
 #loading {
   font-size: 12px;
@@ -35,13 +35,28 @@ body {
   display:none;
 }
 
-#debug_wrap {
-  font-size: 130%
-}
-
 h3, h2 {
   font-size:12px;
   background-color: black;
   color: white;
-  padding:1px;
+  padding:2px;
+}
+
+main {
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-gap: 10px;
+  /* minmax(1px, 1fr); is actual real magic */
+  grid-template-columns: 1.7fr minmax(1px, 1fr);
+  grid-template-rows: 500px;
+}
+
+#bottom {
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+
+#map {
+  height: 100%;
 }

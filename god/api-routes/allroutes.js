@@ -6,7 +6,10 @@ const gremlin = require('../../shared/lib/gremlin-wrapper-v2');
 
 const API = require('../../shared/lib/api')
 
-router.get('/api/room/:id/look', async (req,res) => {
+//
+// Describe and look at a room, filterId is optional, if provided will be removed from results
+// 
+router.get('/api/room/:id/look/:filterId?', async (req,res) => {
     try {
         // Array of stuff we find to send back over the API
         let entities = []
@@ -19,10 +22,12 @@ router.get('/api/room/:id/look', async (req,res) => {
 
         // The things "in" the room (players and NPCs)
         results = await gremlin.getEntitiesIn(req.params.id, 'in');
+        results = results.filter(r => r.id == req.params.filterId ? false : true );
         desc += describeEntities(results, "You can see:", "", entities)
 
         // The things "held" by the room (items)
         results = await gremlin.getEntitiesOut(req.params.id, 'holds');
+        results = results.filter(r => r.id == req.params.filterId ? false : true );
         desc += describeEntities(results, "At your feet there are:", "", entities)
 
         // And the exits
@@ -62,10 +67,10 @@ function describeEntities(results, prefixText, nothingText, entities) {
     if (results && results.length > 0) {
         desc += `${prefixText}\n`;
         for(let res of results) {
-            if(res.label === 'player') continue;
+            //if(res.label === 'player') continue;
             let e = gremlin.rehydrateEntity(res, Entity);
             entities.push(e)
-            desc += `   ${e.description}\n`
+            desc += `   (${e.name}) ${e.description}\n`
         };
     } else {
         desc += nothingText;

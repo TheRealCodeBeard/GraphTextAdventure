@@ -66,3 +66,5 @@ typings/
 
 #Don't want to send private keys to the repo
 config.js
+config*.json
+!config.sample.json

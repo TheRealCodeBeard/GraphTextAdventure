@@ -12,7 +12,6 @@ const gremlin = require('gremlin');//npm install gremlin
 const readline = require('readline');//npm install readline
 const colors = require('colors');//npm install colors
 const http = require('http');
-const config = require("./config");//copy config_template.js as config.js and fill in your settings.
 const gwr = require("./shared/lib/gremlin_wrapper.js");
 const gwr2 = require("./shared/lib/gremlin-wrapper-v2");
 const query = gwr.query;
@@ -60,9 +59,9 @@ let getExits = function(next){
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
-let getItems = function(next){
-    query("g.v('id',roomid).outE().where(has('label','holds')).inV()",{roomid:world.playerCurrentRoomID},results=>next(results));
-};
+// let getItems = function(next){
+//     query("g.v('id',roomid).outE().where(has('label','holds')).inV()",{roomid:world.playerCurrentRoomID},results=>next(results));
+// };
 
 let getPlayerItems = function(next){
     query("g.v('id',playerid).outE().where(has('label','holds')).inV()",{playerid:world.playerNodeID},results=>next(results));
@@ -295,7 +294,7 @@ let look_local = function(next){
 };
 
 let look_api = function(next){
-    call_api(`${config.godURL}/api/room/${world.playerCurrentRoomID}/look`,(result)=>{
+    call_api(`${config.godURL}/api/room/${world.playerCurrentRoomID}/look/${world.playerNodeID}`,(result)=>{
         desc(result.gameMsg);
         next();
     });
@@ -321,80 +320,62 @@ let look_api = function(next){
 
 
 //This detaches the item from the room and attaches it to the player.
-let take = function(words,next){
+let take = async function(words, next){
     let desired = words[1];
     debug(`you want the '${desired}'`);
-    getItems(async items=>{
-        if(items.length){
-            let found = items.filter(e=>(e.properties.name[0].value===desired));
-            if(found.length===1){
-                let item = found[0];
 
-                try {
-                    await gwr2.moveEntityIn(item.id, 'holds', world.playerNodeID);
-                    info(`The ${desired} is now yours!`);
-                } catch(e) {
-                    info(`You fail to pick up the ${desired}`);
-                }
-                next();
+    // Check item is here! - EDGE CASE NOT HANDLED: Multiple items with same name!
+    let itemsHereRes = await gwr2.getEntitiesOut(world.playerCurrentRoomID, 'holds')
+    let item
+    for(let itemRes of itemsHereRes) {
+        item = gwr2.rehydrateEntity(itemRes, Item)
+        if(item.name === desired) break
+    }
 
-                // debug(JSON.stringify(item.id));
-                // info(`You reach out for the '${item.properties.name[0].value}'`);
-                // query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
-                //     {itemid:item.id},
-                //     (results)=>{
-                //         info(`You grasp the '${item.properties.name[0].value}'`);
-                //         query("g.v('id',playerId).addE('holds').to(g.v('id',itemid))",
-                //             {playerId:world.playerNodeID,itemid:item.id},
-                //             (results)=>{
-                //                 info(`The '${item.properties.name[0].value}' is now yours!`);
-                //                 next();
-                //             }
-                //         );
-                //     });
-            } else {
-                info(`There there is no '${desired}'`);
-                next();//next here to prevent 'fall through'
-            }
-        } else {
-            info(`There are no items here so you can't take '${desired}'`);
-            next();//next here to prevent 'fall through'
+    if(item) {
+        info(`You reach out and grab the '${desired}'...`);
+        try {
+            // Taking items is the same as moving, the in/out direction on the edge is reversed
+            await gwr2.moveEntityIn(item.id, 'holds', world.playerNodeID);
+            info(`The ${desired} is now yours!`);
+        } catch(e) {
+            info(`You fail to pick up the ${desired}`);
         }
-    });
+        next();        
+        return;
+    }
+    
+    info(`There there is no '${desired}' here!`);
+    next();
 };
 
-//This detaches the item from the player and attaches it to the room. Dedupe with above?
-let drop = function(words,next){
+let drop = async function(words, next){
     let desired = words[1];
     debug(`you want to drop the '${desired}'`);
-    getPlayerItems(items=>{
-        if(items.length){
-            let found = items.filter(e=>(e.properties.name[0].value===desired));
-            if(found.length===1){
-                let item = found[0];
-                debug(JSON.stringify(item.id));
-                info(`You hold '${item.properties.name[0].value}' in front of you and let go.`);
-                query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
-                    {itemid:item.id},
-                    (results)=>{
-                        info(`The '${item.properties.name[0].value}' falls`);
-                        query("g.v('id',playerRoomId).addE('holds').to(g.v('id',itemid))",
-                            {playerRoomId:world.playerCurrentRoomID,itemid:item.id},
-                            (results)=>{
-                                info(`The '${item.properties.name[0].value}' is now now in the room!`);
-                                next();
-                            }
-                        );
-                    });
-            } else {
-                info(`You don't have '${desired}' to drop.`);
-                next();//next here to prevent 'fall through'
-            }
-        } else {
-            info(`You aren't holding anything so cannot drop the '${desired}'.`);
-            next();//next here to prevent 'fall through'
+
+    // Check item is in inventory - EDGE CASE NOT HANDLED: Multiple items with same name!
+    let itemsHereRes = await gwr2.getEntitiesOut(world.playerNodeID, 'holds')
+    let item
+    for(let itemRes of itemsHereRes) {
+        item = gwr2.rehydrateEntity(itemRes, Item)
+        if(item.name === desired) break
+    }
+
+    if(item) {
+        info(`You reach out and try to drop the '${desired}'...`);
+        try {
+            // Taking items is the same as moving, the in/out direction on the edge is reversed
+            await gwr2.moveEntityIn(item.id, 'holds', world.playerCurrentRoomID);
+            info(`The ${desired} drops to the floor!`);
+        } catch(e) {
+            info(`You fail to drop the ${desired}`);
         }
-    });
+        next();        
+        return;
+    }
+    
+    info(`You are not carrying '${desired}'!`);
+    next();
 };
 
 //This function moves the player to other locations. 
@@ -488,74 +469,117 @@ let act = function(command, next){
    SET UP FUNCTIONS
 */
 
-//Creates a player in a room if the player doesn't exist
+// Creates a room if none exist
 let bootstrap = async function(next){
-    // (BC) New version
-    world.playerName = "First Player (for testing)";
-    
     let room = new Room('start', 'The starting room');
     let result = await gwr2.createEntity(room);
     room.id = result[0].id;
     info(`In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move`);
-    info(`The universe now contains one room: '${room.id}'`);
-
-    let player = new Player('First Player', 'A test player');
-    result = await gwr2.createEntityLinkedTo(player, 'in', room.id);
-    player.id = result[0].id
-    world.playerNodeID = player.id;
-
-    info(`##########################################################################################`);
-    info(`Your player ID is: '${world.playerNodeID}' put this in config.js as 'config.playerVectorID'`);
-    info(`And then restart the app`);
+    info(`\nThe universe now contains one room: '${room.id}'\n`);
+    info(`After this run BLAH BLAH and pass this new room ID`);
+    info(`Exiting, bye!`);
     process.exit(0)
 };
 
-//Gets the player node id from the graph
-let setup_player = function(next){
+// Gets the player node id from the graph
+let setup_player = async function() {
     process.stdout.write("\t[Player ... ".grey);
-    query("g.V('id',playerVectorID)",
-        {playerVectorID:config.playerVectorID},//you are identified by your config file currently
-        (results)=>{
-            if(results.length===1){
-                world.playerNodeID = results[0].id;
-                world.playerName = results[0].properties.name[0].value;
-                debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
-                next();
-            } else if (results.length===0){
-                error("You have no players!");
-                debug("I will create one for you. When I am done, I will give you the ID to put in your config");
-                bootstrap(next);
-            } else {
-                error("\t[Too many player nodes with id in config.]");
-                next();
-            }
-        });
+
+    let results = await gwr2.getEntities('player', 'id', config.playerVectorID);
+
+    if(results.length === 1) {
+        world.playerNodeID = results[0].id;
+        world.playerName = results[0].properties.name[0].value;
+        debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
+        return true;
+    } else if (results.length===0){
+        error('\nPlayer not found, check config.js & playerVectorID is set correctly');
+        error('Or to create new player run: app.js addPlayer {roomId} {name} "{description}"');
+        return false;
+    } else {
+        error("\t[Too many player nodes with id in config.]");
+        return false;
+    }
 };
 
 //Collect the current room ID from the user in the graph
-let setup_room = function(next){
+let setup_room = async function(){
     process.stdout.write("\t[Room   ... ".grey);
-    query("g.v('id',playerId).out('in')",
-        {playerId:world.playerNodeID},
-        (results)=>{
-        //old_query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
-            if(results.length===1){
-                world.playerCurrentRoomID = results[0].id;
-                debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
-            } else {
-                error("\t[Player can only be in one room]");
-            }
-            next();
-    });
+    let results = await gwr2.getEntitiesOut(world.playerNodeID, 'in')
+    if(results.length === 1) {
+        world.playerCurrentRoomID = results[0].id;
+        debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
+        return true
+    } else {
+        error("\t[Player can only be in one room]");
+        return false
+    }
 };
+
+// Check we have at least one room
+let setup_world = async function() {
+    let rooms = await gwr2.getEntities('room', 'label', 'room')
+    if(rooms.length < 1) {
+        bootstrap();
+    }
+    return true
+}
+
+let create_player = async function(roomId, name, description) {
+    let roomRes = await gwr2.getEntities('room', 'id', roomId)
+    if(roomRes.length != 1) { 
+        throw new Error(`Room '${roomId}' does not exist, can not create player!`)
+    }
+
+    let player = new Player(name, description);
+    let result
+    try {
+        result = await gwr2.createEntityLinkedTo(player, 'in', roomId);
+    } catch(e) {
+        console.error(e);
+        return null
+    }
+
+    player.id = result[0].id;
+    return player
+}
 
 //This is the main game setup. 
 //Other setup functions are all called from here. 
-let setup = function(next){
+let setup = async function(next) {
+    if(process.argv.length > 2) {
+        switch(process.argv[2].toLowerCase()) {
+            case 'addplayer':
+                if(process.argv.length < 6) { info('Syntax is: addPlayer {roomId} {name} "{description}"'); process.exit(1) }
+                info('Adding a new player...') 
+                try {
+                    let player = await create_player(process.argv[3], process.argv[4], process.argv[5])
+                    info(`Rejoyce! '${player.name}' has been beamed into the world\n`)
+                    info(`Now edit your config.js and set config.playerVectorID to be id: ${player.id}\n\nExiting...`)
+                } catch(e) {
+                    console.log(e);
+                    process.exit(1);
+                }
+                break;
+        }
+    }
+
     debug('[Setting up ...');
-    let last = ()=>{debug(' Setup complete!]\n');info("Use 'engine: (api|local)' to use API or LOCAL command eval.");next();}
-    let two = ()=>{setup_room(last);}
-    setup_player(two);//Call back style for chaining.
+    if(! await setup_world()) {
+        error('- Problem with world, exiting!')
+        process.exit(1)
+    }
+    if(! await setup_player()) {
+        error('- Problem with player, exiting!')
+        process.exit(1)
+    }   
+    if(! await setup_room()) {
+        error('- Problem with player current room, exiting!')
+        process.exit(1)
+    }      
+    
+    // chaining stuff
+    next()
 };
 
 /* 
@@ -589,5 +613,17 @@ let kill = function(){
     process.exit();
 };
 
-//Begin!
+// =========================================================
+// Begin!
+// =========================================================
+
+// Config file loading
+if(process.argv.length === 3 && process.argv[2].includes('.json'))
+    configFile = process.argv[2]
+else 
+    configFile = 'config.json'
+
+const config = JSON.parse(fs.readFileSync(configFile))
+
+// Otherwise start the game client
 setup(()=>{interactive(kill);});

@@ -144,7 +144,7 @@ let moveEntityOut = function(id, linkLabel, destId) {
 let moveEntityIn = function(id, linkLabel, destId) { 
     return query("g.v(id).inE('label', linkLabel).drop()", {id: id, linkLabel: linkLabel })
     .then(r => {
-        return query("g.v(id).addE(linkLabel).to( g.V('id', destId) )", {id: id, linkLabel: linkLabel, destId: destId})
+        return query("g.v(id).addE(linkLabel).from( g.V('id', destId) )", {id: id, linkLabel: linkLabel, destId: destId})
     })
 }
 
