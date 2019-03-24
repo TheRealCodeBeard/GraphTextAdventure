@@ -5,8 +5,8 @@
                 font-family: sans-serif;
             }
             #cy {
-                width: 800px;
-                height: 500px;
+                width: 100%;
+                height: 60%;
                 display: block;
                 border:solid 1px black;
             }
@@ -30,6 +30,15 @@
             #player_information {
                 display:none;
             }
+            #debug pre {
+                font-family: 'Consolas', 'Courier New', Courier, monospace;
+                background-color: rgb(20, 20, 20);
+                color: lawngreen;
+                padding: 1rem;
+                font-size: 15px;
+                max-height: 20%;
+                overflow-y: scroll;
+            }
             h3, h2 {
                 font-size:12px;
                 background-color: black;
@@ -45,6 +54,7 @@
     <body onload="go()">
         <h1>Current Map <span id="loading"></span></h1>
         <div id="cy"></div>
+        <h2>Debugger</h2><div id="debug"></div>
         <h2 onclick="hidePlayerList()">Players</h2>
         <div id="player_list"></div>
         <div id="player_information">
