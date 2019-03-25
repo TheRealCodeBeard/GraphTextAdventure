@@ -1,4 +1,4 @@
-const Entity = require('../models/entity')
+const Entity = require('./entity')
 
 class Room {
   constructor(name, description) {

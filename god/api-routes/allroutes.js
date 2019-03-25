@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-const Entity = require('../../shared/models/entity');
+const Entity = require('../../shared/lib/entity');
 const gremlin = require('../../shared/lib/gremlin-wrapper-v2');
 
 const API = require('../../shared/lib/api')

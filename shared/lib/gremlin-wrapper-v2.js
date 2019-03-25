@@ -1,5 +1,10 @@
 const gremlin = require('gremlin');
 
+//
+// New unified and reusable entity based Gremlin wrapper library
+//
+
+
 // Picks up the config and creates the client
 const gremlinClient = gremlin.createClient(
     process.env.COSMOS_PORT,
@@ -15,7 +20,6 @@ const gremlinClient = gremlin.createClient(
 // This function wraps a standard Gremlin call to cosmos with a Promise
 let query = function(query, parameters) {
     //console.log(query, parameters);
-    
     return new Promise(function (resolve, reject) {
         gremlinClient.execute(query, parameters, (err, results) => {
             if (err) reject(err);

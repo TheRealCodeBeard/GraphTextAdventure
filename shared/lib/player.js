@@ -1,5 +1,5 @@
-const Entity = require('../models/entity')
-const GameAttributes = require('../models/game-atrributes')
+const Entity = require('./entity')
+const GameAttributes = require('./game-atrributes')
 
 class Player {
   constructor(name, description) {

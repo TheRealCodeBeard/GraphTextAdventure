@@ -4,7 +4,7 @@
 // Notes. None
 //
 
-const ApiModel = require('../models/api-resp')
+const ApiModel = require('./api-resp')
 
 //
 // Send a single entity
