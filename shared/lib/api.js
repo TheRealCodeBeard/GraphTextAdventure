@@ -42,3 +42,14 @@ exports.send404 = function(res, apiMsg) {
 exports.send400 = function(res, apiMsg) {
   res.status(400).send(new ApiModel.ApiResponse(apiMsg, "", []))
 }
+
+
+exports.sendRoomMessage = function(roomId, msg) {
+  require('axios').post(`${process.env.API_GOD_HOST}/api/room/${roomId}/message`, {
+    message: msg
+  })
+  .catch(err => {
+    console.log(err.toString());
+    
+  })
+}

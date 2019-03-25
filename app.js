@@ -30,6 +30,7 @@ let error = function(text){ console.error(text.red); };
 let game = function(text){ console.log(text.green); };
 let info = function(text){ console.log(text.yellow); };
 let desc = function(text){ console.log(text.cyan); };
+let post = function(text){ console.log(text.magenta); };
 
 let use_api = true;
 
@@ -57,10 +58,10 @@ let engine = function(words,next){
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
-let getExits = async function(next){
-    let result = await gremlin.getEntitiesOutToLabel(world.playerCurrentRoomID, 'room');
-    return result;
-};
+// let getExits = async function(next){
+//     let result = await gremlin.getEntitiesOutToLabel(world.playerCurrentRoomID, 'room');
+//     return result;
+// };
 
 debug("[Graph connection established]");
 
@@ -83,7 +84,9 @@ let world = {
         "north":"south",
         "east":"west",
         "south":"north",
-        "west":"east"
+        "west":"east",
+        "up": "down",
+        "down": "up"
     }
 };
 
@@ -96,9 +99,9 @@ let make_room = async function(words,next){
 
     if(world.possibleDirections[direction]){
         info("Checking...");
-        let exitsRes = await gremlin.getEntitiesOutToLabel(world.playerCurrentRoomID, 'room');
+        let exitsRes = await gremlin.getLinksByLabel(world.playerCurrentRoomID, 'path');
 
-        if(exitsRes.some(r=>r.label===direction)){
+        if(exitsRes.some(r => r.properties.name === direction)){
             info(`There is already a room to the ${direction.white}.`);
             info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
             next();
@@ -109,9 +112,11 @@ let make_room = async function(words,next){
 
             let rnd = Math.floor(Math.random() * Math.floor(10000));
             let newRoom = new Room(`room ${rnd}`, 'An empty room');
-            let result = await gremlin.createEntityLinkedTo(newRoom, opposite, world.playerCurrentRoomID)
+            // Create a new room and link it with a link of type 'path' and name = direction
+            let result = await gremlin.createEntityLinkedTo(newRoom, 'path', world.playerCurrentRoomID, opposite)
             newRoom.id = result[0].id;
-            await gremlin.createLinkTo(world.playerCurrentRoomID, direction, newRoom.id)
+            // Create a link of type 'path' and name = direction back to the room
+            await gremlin.createLinkTo(world.playerCurrentRoomID, 'path', newRoom.id, direction)
             next();
         }
 
@@ -379,7 +384,7 @@ let drop = async function(words, next){
 let walk = async function(words,next){
     process.stdout.write(`[${words[0].green}ing .`.green);//To allow for multiple verbs
     
-    if(words.length == 1){
+    if(words.length == 1) {
         console.log("You must say which way you want to go. For example 'walk north'");
         next();
         return;
@@ -389,8 +394,8 @@ let walk = async function(words,next){
     process.stdout.write(".".green);
 
     // Get exits and see if user had picked one
-    let exitsRes = await gremlin.getEntitiesOutToLabel(world.playerCurrentRoomID, 'room');
-    let chosenRoom = exitsRes.filter((e)=>{return e.label === direction});
+    let pathsRes = await gremlin.getLinksByLabel(world.playerCurrentRoomID, 'path');
+    let chosenRoom = pathsRes.filter(path => { return path.properties.name === direction });
 
     if(chosenRoom.length === 1) {
         world.playerCurrentRoomID = chosenRoom[0].inV;
@@ -401,6 +406,16 @@ let walk = async function(words,next){
         game(`There is no exit to the '${direction.white}']`);
         next();        
     }
+    
+    next();
+};
+
+// This is going to be terrible
+let say = async function(words,next){
+    //let msg = words.slice(1, words.length).join("")
+    call_api_post(`${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/message`, {
+        message: `${world.playerName} says: ` + words.slice(1, words.length).join(" ")
+    })
     
     next();
 };
@@ -450,6 +465,9 @@ let act = function(command, next){
         case "engine:":
             engine(words,next);
             break;
+        case "say":
+            say(words,next);
+            break;            
         default:
             info("What?");
             next();
@@ -511,7 +529,8 @@ let setup_room = async function(){
 let setup_world = async function() {
     let rooms = await gremlin.getEntities('room', 'label', 'room')
     if(rooms.length < 1) {
-        bootstrap();
+        await bootstrap();
+        return false
     }
     return true
 }
@@ -547,6 +566,7 @@ let setup = async function(next) {
                     let player = await create_player(process.argv[3], process.argv[4], process.argv[5])
                     info(`Rejoyce! '${player.name}' has been beamed into the world\n`)
                     info(`Now edit your .env file and set LOCAL_PLAYER_ID to be id: ${player.id}\n\nExiting...`)
+                    process.exit(0);
                 } catch(e) {
                     console.log(e);
                     process.exit(1);
@@ -574,6 +594,9 @@ let setup = async function(next) {
         process.exit(1)
     }      
     
+    // Look at startup
+    await look_api(next)
+
     // chaining stuff
     next()
 };
@@ -585,7 +608,7 @@ let setup = async function(next) {
 //This is the main game loop.
 //It is async and recursive to work with RL and Graph APIs.
 let interactive = function(finalise){
-    rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n>`.green,(response)=>{
+    rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n> `.green,(response)=>{
         if(response === "quit" || response === "exit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
     });
@@ -615,3 +638,21 @@ let kill = function(){
 
 // Otherwise start the game client
 setup(()=>{interactive(kill);});
+
+
+// Janky message comms test, looping polling thing
+// Not using API to keep overhead low - for now
+var lastCheck = new Date().getTime()
+setInterval(() => {
+    gremlin.getEntities('room', 'id', world.playerCurrentRoomID)
+    .then(roomRes => {
+        let room = gremlin.rehydrateEntity(roomRes[0], Room);
+        for(let msg of room.messages) {
+            if(msg.text.startsWith(`${world.playerName} says:`)) continue;
+            if(msg.timestamp > lastCheck)
+                post("\n" + msg.text); 
+        }
+        lastCheck = new Date().getTime();
+    })
+
+}, 8000);

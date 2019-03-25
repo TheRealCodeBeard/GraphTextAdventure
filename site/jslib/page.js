@@ -40,11 +40,11 @@ let resplafunt = function(data){
         });
     });
     
-    data.edges.forEach(element=>{
+    data.edges.forEach(element=>{    
         the_data.push({
             data:{
                 id:element.id,
-                label:element.label,
+                label: (element.properties && element.properties.name) ? `${element.label}: ${element.properties.name}` : element.label,
                 source:element.outV,
                 target:element.inV
             }
@@ -110,16 +110,16 @@ let load_player_room_items = function(guid){
         });
 };
 
-let debug_room = function(guid){
-    fetch(`${god_root}/api/room/${guid}/look`)
-        .then(response=>response.json())
-        .then(data=>{
-            document.getElementById('debug').innerHTML = `Room: ${guid}\n\n${data.gameMsg}`
-        })
-};
+// let debug_room = function(guid){
+//     fetch(`${god_root}/api/room/${guid}/look`)
+//         .then(response=>response.json())
+//         .then(data=>{
+//             document.getElementById('debug').innerHTML = `Room: ${guid}\n\n${data.gameMsg}`
+//         })
+// };
 
 let debug_entity = function(guid){
-    fetch(`${god_root}/api/entities/${guid}`)
+    fetch(`${god_root}/api/entities/any/${guid}`)
         .then(response=>response.json())
         .then(data=>{
             document.getElementById('debug').innerHTML = JSON.stringify(data.entities[0], null, 2)
@@ -151,10 +151,10 @@ let go = function(){
             cy.on('click', evt => {
                 // Only work with nodes
                 if(evt.target.length > 0 && evt.target.isNode()) {
-                    if(evt.target.data().label === 'room')
-                        debug_room(evt.target.data().id);
-                    else
-                        debug_entity(evt.target.data().id);
+                    // if(evt.target.data().label === 'room')
+                    //     debug_entity(evt.target.data().id);
+                    // else
+                    debug_entity(evt.target.data().id);
                 } else {
                     document.getElementById('debug').innerHTML = ''
                 }

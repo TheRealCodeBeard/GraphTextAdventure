@@ -1,7 +1,7 @@
 #!node
 
 require('dotenv').config({ path: '.env' })
-console.log(process.env);
+require('dotenv').config({ path: '../.env' })
     
 const gremlin = require('../shared/lib/gremlin-wrapper-v2')
 

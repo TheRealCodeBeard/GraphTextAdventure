@@ -1,1 +1,24 @@
-GET http://localhost:6000/api/room/f621889b-15e7-4daf-8e4d-40857df9ac87/exits
+@roomID = 499b5c64-3f50-4d69-8e64-d9d32227988e
+
+GET http://localhost:7000/api/room/{{roomID}}/look
+
+###
+GET http://localhost:7000/api/entities/any/{{roomID}}
+
+###
+GET http://localhost:7000/api/entities/room
+
+###
+GET http://localhost:7000/api/entities/room/{{roomID}}
+
+###
+
+POST http://localhost:7000/api/room/{{roomID}}/message
+content-type: application/json
+
+{
+  "message": "Another orc wanders in"
+}
+
+###
+GET http://localhost:7000/api/room/message/1553531933526

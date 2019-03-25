@@ -45,58 +45,14 @@ router.post('/api/npcs/create', async function (req, res, next) {
     npc.id = gremlinRes[0].id
 
     debug(`Created NPC ${gremlinRes[0].id} in location ${locationId}`)
-    
+    API.sendRoomMessage(locationId, `${npc.description} has spawned here!`)
+
     // Send back the NPC in an API payload with a message
     API.sendOne(res, "success", `A ${npc.npcDesc} ${npc.name} spawns`, npc)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString());
   }
-})
-
-
-/**
- * Get a single NPC by id
- * @route GET /npcs/{id}
- * @group NPCs - Operations on NPCs
- * @param {string} id.path.required - The id of the NPC
- * @returns {ApiResp.model} 200 - An ApiResp object
- * @returns {Error} 404 - NPC not found
- * @returns {Error} default - Unexpected error
- */
-router.get('/api/npcs/:id', async function (req, res, next) {
-  try {
-    debug(`Fetching NPC ${req.params.id}`)
-    let gremlinRes = await gremlin.getEntities('npc', 'id', req.params.id)
-    if(gremlinRes.length == 0) { API.send404(res, `NPC ${req.params.id} not found`); return }
-  
-    let npc = gremlin.rehydrateEntity(gremlinRes[0], NPC)
-    API.sendOne(res, "success", "", npc)
-  } catch(e) {
-    console.error(`### ERROR: ${e.toString()}`);
-    API.send500(res, e.toString())
-  }
-})
-
-
-/**
- * Return all NPCs
- * @route GET /npcs
- * @group NPCs - Operations on NPCs
- * @returns {ApiResp.model} 200 - An ApiResp object
- * @returns {Error} default - Unexpected error
- */
-router.get('/api/npcs', async function (req, res, next) {
-  debug(`Listing ALL NPCs`)
-
-  // we pass a redundant filter to fetch ALL npcs
-  let gremlinResults = await gremlin.getEntities('npc', 'label', 'npc')
-  let entities = []
-  for(let gremlinRes of gremlinResults) {
-    let npc = gremlin.rehydrateEntity(gremlinRes, NPC)
-    entities.push(npc)
-  }
-  API.sendArray(res, "success", "", entities)
 })
 
 
@@ -145,9 +101,8 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
  */
 router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
   try {
-    // await gremlin.query("g.v('id', id).outE('label', 'in').drop()", {id: req.params.id})
-    // await gremlin.query("g.v('id', id).addE('in').to( g.V('id', locationId) )", {id: req.params.id, locationId: req.params.locationId})
     await gremlin.moveEntityOut(req.params.id, 'in', req.params.locationId)
+    API.sendRoomMessage(req.params.locationId, `A NPC has wandered in`)
 
     API.sendOne(res, "success", "The NPC moves to another location", {})
   } catch(e) {

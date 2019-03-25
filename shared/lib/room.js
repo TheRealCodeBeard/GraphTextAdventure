@@ -9,6 +9,20 @@ class Room {
     this.label = 'room'    // Pretty damn important
     this.name = name 
     this.description = description
+
+    // Room specific stuff
+    this.messages = []
+  }
+
+  addMessage(msg) {   
+    this.messages.push({
+      timestamp: new Date().getTime(),
+      text: msg
+    })
+  }
+
+  getMessagesAfter(timestamp) {
+    return this.messages.filter(m => m.timestamp >= timestamp)
   }
 }
 
