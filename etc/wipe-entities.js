@@ -1,5 +1,8 @@
 #!node
 
+require('dotenv').config({ path: '.env' })
+console.log(process.env);
+    
 const gremlin = require('../shared/lib/gremlin-wrapper-v2')
 
 if(process.argv.length < 3) {

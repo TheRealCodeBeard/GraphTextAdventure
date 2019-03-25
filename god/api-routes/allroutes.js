@@ -61,9 +61,6 @@ router.get('/api/entities/:id', async (req,res) => {
 function describeEntities(results, prefixText, nothingText, entities) {
     let desc = ""
 
-    // You here, but are alone
-    if(results.length == 1 && results[0].label === 'player') return ""
-
     if (results && results.length > 0) {
         desc += `${prefixText}\n`;
         for(let res of results) {

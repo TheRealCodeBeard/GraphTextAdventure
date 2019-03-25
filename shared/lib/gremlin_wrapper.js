@@ -1,15 +1,15 @@
 const gremlin = require('gremlin');
-const config = require("../../config");
+//const config = require("../../config");
 
-//Picks up the config and creastes the client
+// Picks up the config and creates the client
 const gremlinClient = gremlin.createClient(
-    config.port, //usually 443
-    config.endpoint, 
+    process.env.COSMOS_PORT,
+    process.env.COSMOS_ENDPOINT, 
     { 
         "session": false, 
         "ssl": true, 
-        "user": `/dbs/${config.database}/colls/${config.collection}`,
-        "password": config.primaryKey
+        "user": `/dbs/${process.env.COSMOS_DB}/colls/${process.env.COSMOS_COLLECTION}`,
+        "password": process.env.COSMOS_KEY
     }
 );
 

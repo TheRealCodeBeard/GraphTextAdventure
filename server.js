@@ -1,3 +1,9 @@
+// Config file loading - MUST be before requiring the Gremlin wrapper(s)
+if(process.argv.length === 3 && process.argv[2].includes('.env'))
+    require('dotenv').config({ path: process.argv[2] })
+else 
+    require('dotenv').config()
+    
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -6,7 +12,7 @@ const gwr = require("./shared/lib/gremlin_wrapper.js");
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-const port = 3000;
+const port = parseInt(process.env.PORT) || 3000;
 
 app.use(express.static('site'))
 
@@ -104,7 +110,7 @@ app.get('/api/players', (req,res)=>{
 */
 
 //
-// API discovery, NOT USED FOR ANYTHING YET! but needed when we have cross service calls
+// API discovery
 //
 app.get('/.well-known/gta-metadata', async (req, res)=>{
     res.send({
