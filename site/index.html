@@ -1,60 +1,46 @@
 <html>
-    <head>
-        <style type="text/css">
-            body {
-                font-family: sans-serif;
-            }
-            #cy {
-                width: 800px;
-                height: 500px;
-                display: block;
-                border:solid 1px black;
-            }
-            #loading {
-                font-size: 12px;
-            }
-            .item span {
-                font-size:12px;
-                padding:10px;
-                margin:1px;
-                color: black;
-                background-color: aliceblue;
-                border:solid 1px black;
-                min-width: 100px;
-                display: inline-block;
-            }
-            #player_list .item span:first-child:hover{
-                font-style: italic;
-                cursor: pointer;
-            }
-            #player_information {
-                display:none;
-            }
-            h3, h2 {
-                font-size:12px;
-                background-color: black;
-                color: white;
-                padding:1px;
-            }
-        </style>
-        <script src="./jslib/cytoscape.min.js"></script>
-        <script src="./jslib/page.js"></script>
-        <title>Graph Text Adventure: God View</title>
-        <link rel="shortcut icon" href="favicon.png" type="image/png">
-    </head>
-    <body onload="go()">
-        <h1>Current Map <span id="loading"></span></h1>
+  <head>
+    <script src="./jslib/cytoscape.min.js"></script>
+    <script src="./jslib/page.js"></script>
+
+    <link rel="stylesheet" href="css/main.css">
+
+    <title>Graph Text Adventure: God View</title>
+    <link rel="shortcut icon" href="favicon.png" type="image/png">
+
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/railscasts.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </head>
+
+  <body onload="go()">
+    <main>
+      <div id="map">
+        <h2>World Map</h2>
+        <div id="loading"></div>
         <div id="cy"></div>
+      </div>
+
+      <div id="debugger">
+        <h2>Debugger</h2>
+        <pre><code class="json" id="debug"></code></pre>     
+      </div>
+
+      <div id="bottom">
         <h2 onclick="hidePlayerList()">Players</h2>
         <div id="player_list"></div>
-        <div id="player_information">
-            <h2>Player: <span id="player_guid"></span></h2>
-            <h3>The Player Holds</h3>
-            <div id="player_items"></div>
-            <h3>Player is in this Room</h3>
-            <div id="player_room"></div>
-            <h3>This room holds</h3>
-            <div id="room_items"></div>
-        </div>
-    </body>
+        <div id="player_information"></div>
+
+        <h2>Player: <span id="player_guid"></span></h2>
+        <h3>The Player Holds</h3>
+        <div id="player_items"></div>
+
+        <h3>Player is in this Room</h3>
+        <div id="player_room"></div>
+
+        <h3>This room holds</h3>
+        <div id="room_items"></div>        
+      </div>
+    </main>
+  </body>
 </html>

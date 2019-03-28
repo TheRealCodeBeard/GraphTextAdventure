@@ -1,0 +1,19 @@
+{
+  "restartable": "rs",
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules",
+    "**/node_modules"
+  ],
+  "verbose": false,
+  "watch": [
+    "shared/",
+    "npc/",
+    "god/",
+    "player/",
+    "app.js",
+    "server.js",
+    ".env"
+  ],
+  "ext": "js json .env"
+}

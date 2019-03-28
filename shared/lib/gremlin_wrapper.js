@@ -1,15 +1,15 @@
 const gremlin = require('gremlin');
-const config = require("../../config");
+//const config = require("../../config");
 
-//Picks up the config and creastes the client
+// Picks up the config and creates the client
 const gremlinClient = gremlin.createClient(
-    config.port, //usually 443
-    config.endpoint, 
+    process.env.COSMOS_PORT,
+    process.env.COSMOS_ENDPOINT, 
     { 
         "session": false, 
         "ssl": true, 
-        "user": `/dbs/${config.database}/colls/${config.collection}`,
-        "password": config.primaryKey
+        "user": `/dbs/${process.env.COSMOS_DB}/colls/${process.env.COSMOS_COLLECTION}`,
+        "password": process.env.COSMOS_KEY
     }
 );
 
@@ -33,7 +33,7 @@ let gremlin_query_promise = function(query, parameters) {
 
 //This returns the current graph as a nodes and edges object
 let return_current_graph = function(next){
-    gremlin_query("g.V().map(values('id','label','description').fold())",null,(node_results)=>{
+    gremlin_query("g.V().map(values('id','label','description','name').fold())",null,(node_results)=>{
         gremlin_query("g.E()",null,(edge_results)=>{
             next({
                 nodes:node_results,
@@ -87,32 +87,68 @@ let reformat_player_vector = function(player){
     };
 };
 
-let create_npc = function(npc, locationId, next) {
-    return gremlin_query_promise(`g.addV('agent').as('x')
-        .property('label', 'npc')
-        .property('name', name)
-        .property('description', shortDesc)
-        .property('jsonString', jsonString)
+//
+// Remove special entity fields, and serialize to JSON
+//
+let serialize_entity = function(entity) {
+    const copy = Object.assign({}, entity);
+    delete copy.id
+    delete copy.name
+    delete copy.description
+    delete copy.label
+    return JSON.stringify(copy)
+}
+
+//
+// Rehydrate any entity from Gremlin vertex result
+//
+let rehydrate_entity = function(vertex, entityConstructor) {
+    // Deserialise data
+    let data = JSON.parse(vertex.properties.data[0].value)
+    let name = vertex.properties.name[0].value
+    
+    // Construct new entity thing
+    let entity = new entityConstructor(name)
+    // Push in and overwrite with loaded/de-serialized data
+    Object.assign(entity, data)
+
+    // Further mutate new object and push in special properties
+    entity.id = vertex.id
+    entity.label = vertex.label
+    entity.name = name
+    entity.description = vertex.properties.description[0].value
+
+    return entity
+}
+
+let create_entity_in_loc = function(entity, locationId, next) {
+    return gremlin_query_promise(`g.addV(label).as('x')
+        .property('name', type)
+        .property('description', description)
+        .property('data', data)
         .addE('in').to( g.V('id', locationId) ).outV()`,
         { 
+            label: entity.label,
             locationId: locationId, 
-            name: npc.type, 
-            jsonString: JSON.stringify(npc),
-            shortDesc: npc.shortDesc
+            type: entity.name, 
+            data: serialize_entity(entity),
+            description: entity.description
         });
 };
 
-let get_npcs = function(propFilter, propFilterValue) {
+let get_entities = function(label, propFilter, propFilterValue) {
     return gremlin_query_promise(
-        `g.v().hasLabel('npc').has(propFilter, propFilterValue)`, 
-        { propFilter: propFilter, propFilterValue: propFilterValue }
+        `g.v().hasLabel(label).has(propFilter, propFilterValue)`, 
+        { label: label, propFilter: propFilter, propFilterValue: propFilterValue }
     )
 }
 
-let update_npc = function(id, npc) {
+let update_entity = function(id, entity) { 
     return gremlin_query_promise(
-        `g.v().hasLabel('npc').has('id', id).property('jsonString', jsonString)`, 
-        { id: id, jsonString: JSON.stringify(npc) }
+        `g.v().hasLabel(label).has('id', id)
+        .property('description', description)
+        .property('data', data)`, 
+        { label: entity.label, id: id, data: serialize_entity(entity), description: entity.description }
     )
 }
 
@@ -129,7 +165,8 @@ module.exports = {
     query:gremlin_query,
 
     query_promise: gremlin_query_promise,
-    create_npc: create_npc,
-    get_npcs: get_npcs,
-    update_npc: update_npc
+    rehydrate_entity: rehydrate_entity,
+    create_entity_in_loc: create_entity_in_loc,
+    get_entities: get_entities,
+    update_entity: update_entity
 };

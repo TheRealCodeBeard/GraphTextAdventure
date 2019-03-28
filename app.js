@@ -7,15 +7,22 @@
 
     Thanks, Phil.
 */
-const fs = require('fs');//used to write graph dumps while testing visualisation
-const gremlin = require('gremlin');//npm install gremlin
-const readline = require('readline');//npm install readline
-const colors = require('colors');//npm install colors
-const http = require('http');
-const config = require("./config");//copy config_template.js as config.js and fill in your settings.
-const gwr = require("./shared/lib/gremlin_wrapper.js");
-const query = gwr.query;
-const axios = require('axios')
+
+// Config file loading - MUST be before requiring the Gremlin wrapper(s)
+if(process.argv.length === 3 && process.argv[2].includes('.env'))
+    require('dotenv').config({ path: process.argv[2] })
+else 
+    require('dotenv').config()
+
+const readline = require('readline');
+const colors = require('colors');
+const gremlin = require("./shared/lib/gremlin-wrapper-v2");
+
+const API = require('./shared/lib/api')
+
+const Player = require('./shared/lib/player')
+const Room = require('./shared/lib/room')
+const Item = require('./shared/lib/item')
 
 //Write to the console in the debug colour.
 let debug = function(text){ console.log(text.grey); };
@@ -23,6 +30,7 @@ let error = function(text){ console.error(text.red); };
 let game = function(text){ console.log(text.green); };
 let info = function(text){ console.log(text.yellow); };
 let desc = function(text){ console.log(text.cyan); };
+let post = function(text){ console.log(text.magenta); };
 
 let use_api = true;
 
@@ -50,18 +58,10 @@ let engine = function(words,next){
 };
 
 //This retuns the 'out edges' from the players current room. An out edge represents a door.
-let getExits = function(next){
-    query("g.v('id',roomid).outE().where(inV().has('label','room'))",{roomid:world.playerCurrentRoomID},results=>next(results));
-};
-
-//This retuns the 'out edges' from the players current room. An out edge represents a door.
-let getItems = function(next){
-    query("g.v('id',roomid).outE().where(has('label','holds')).inV()",{roomid:world.playerCurrentRoomID},results=>next(results));
-};
-
-let getPlayerItems = function(next){
-    query("g.v('id',playerid).outE().where(has('label','holds')).inV()",{playerid:world.playerNodeID},results=>next(results));
-};
+// let getExits = async function(next){
+//     let result = await gremlin.getEntitiesOutToLabel(world.playerCurrentRoomID, 'room');
+//     return result;
+// };
 
 debug("[Graph connection established]");
 
@@ -84,7 +84,9 @@ let world = {
         "north":"south",
         "east":"west",
         "south":"north",
-        "west":"east"
+        "west":"east",
+        "up": "down",
+        "down": "up"
     }
 };
 
@@ -92,33 +94,32 @@ let world = {
    WORLD BUILDER ACTION FUNCTIONS
 */
 
-let make_room = function(words,next){
+let make_room = async function(words,next){
     let direction = words[3];
+
     if(world.possibleDirections[direction]){
         info("Checking...");
-        getExits((rooms)=>{
-            if(rooms.some(r=>r.label===direction)){
-                info(`There is already a room to the ${direction.white}.`);
-                info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
-                next();
-            } else {
-                info(`OK. Building Room to the ${direction.white}...`);
-                let opposite = world.possibleDirections[direction];
-                debug(`Return door to: ${opposite}.`);
-                query("g.addV('room').property('made','node app').addE(opp).to(g.V('id',playerRoomId))",
-                    {opp:opposite, playerRoomId:world.playerCurrentRoomID},
-                    (newEdges)=>{
-                        info(`Connecting door to current room...`);
-                        query("g.V('id',playerRoomId).addE(dir).to(g.V('id',newRoomId))",
-                        {playerRoomId:world.playerCurrentRoomID,dir:direction,newRoomId:newEdges[0].outV},
-                        (result)=>{
-                            info(`Connected door to current room`);
-                            next();
-                        });
-                    }
-                );
-            }
-        });
+        let exitsRes = await gremlin.getLinksByLabel(world.playerCurrentRoomID, 'path');
+
+        if(exitsRes.some(r => r.properties.name === direction)){
+            info(`There is already a room to the ${direction.white}.`);
+            info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
+            next();
+        } else {
+            info(`OK. Building room to the ${direction.white}...`);
+            let opposite = world.possibleDirections[direction];
+            debug(`Return door to: ${opposite}.`);
+
+            let rnd = Math.floor(Math.random() * Math.floor(10000));
+            let newRoom = new Room(`room ${rnd}`, 'An empty room');
+            // Create a new room and link it with a link of type 'path' and name = direction
+            let result = await gremlin.createEntityLinkedTo(newRoom, 'path', world.playerCurrentRoomID, opposite)
+            newRoom.id = result[0].id;
+            // Create a link of type 'path' and name = direction back to the room
+            await gremlin.createLinkTo(world.playerCurrentRoomID, 'path', newRoom.id, direction)
+            next();
+        }
+
     } else {
         info(`You can't make a room to the ${direction.white}.`);
         info(`Only 'north, south, east and west' are currently allowed.`);
@@ -126,31 +127,31 @@ let make_room = function(words,next){
     } 
 };
 
-let make_item = function(words,next){
-    let item = words[2];
-    let desc = words.slice(3).join(" ");
-    debug(`Making a(n) '${item}': '${desc}'`);
-    query("g.addV('item').property('made','node app').property('description',description).property('name',name).addE('holds').from(g.V('id',playerRoomId))",
-        {playerRoomId:world.playerCurrentRoomID,description:desc,name:item},
-        (result)=>{
-            info(`item '${item}' made`)
-            next();
-        });
+let make_item = async function(words,next){
+    let itemName = words[2];
+    try {
+        let desc = words.slice(3).join(" ");
+        debug(`Making a(n) '${itemName}': '${desc}'`);
+
+        let item = new Item(itemName, desc);
+        let result = await gremlin.createEntityLinkedFrom(item, 'holds', world.playerCurrentRoomID);
+        item.id = result[0].id;
+    } catch(e) {
+        error(`Failed to make item. ${e.toString()}`);
+    }
+    next();
 };
 
-let make_npc = function(words, next){
+let make_npc = async function(words, next){
     let type = words[2];
-    call_api_post(`${config.npcURL}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
-    .then(resp => {
-        if(resp && resp.data) {
-            info(`${resp.data.gameMsg} before your very eyes!`);
-        }
-        next();
-    })
-    .catch(err => {
-        error(`Failed to spawn NPC. ${err.response.data.apiMsg}`);
-        next();
-    })
+    try {
+        //let resp = await call_api_post(`${process.env.API_NPC_HOST}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
+        let resp = await API.post('npc', `npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
+        if(resp) info(`${resp.gameMsg} before your very eyes!`);
+    } catch(e) {
+        error(`Failed to spawn NPC. ${e.toString()}`);
+    }
+    next();  
 };
 
 //This is the function that 'makes' things. It will make rooms first and then other things.
@@ -178,15 +179,18 @@ let make = function(words,next){
 
 //This function adds the 'description' property to the current room node. 
 //It will overwrite what is there currently
-let add_description = function(words,next){
-    let description = words.slice(1).join(" ");
-    query("g.v('id',playerRoomId).property('description',desc)",
-        {playerRoomId:world.playerCurrentRoomID,desc:description},
-        (results)=>{
-            debug("Description added to room");
-            act("look",next);        
-        }
-    );
+let add_description = async function(words,next) {
+    try {
+        let description = words.slice(1).join(" ");
+        let roomRes = await gremlin.getEntities('room', 'id', world.playerCurrentRoomID)
+        let room = gremlin.rehydrateEntity(roomRes[0], Room)
+        room.description = description
+        await gremlin.updateEntity(world.playerCurrentRoomID, room)
+        await look_api(next)
+    } catch(e) {
+        error(`Failed to add description to room. ${e.toString()}`);
+    }
+    next();
 };
 
 /* 
@@ -234,195 +238,165 @@ let describe_items = function(items){
     }
 };
 
-//the wrapper method for calling the API based engine
-// !!TODO!! move this to Axios as well
-let call_api = function(call,next){
-    http.get(call,resp=>{
-        let data = '';
-        resp.on('data',chunk=>data +=chunk);
-        resp.on('end',()=>next(JSON.parse(data)));
-    });
-};
-
-// Make a HTTP post call
-let call_api_post = function(url, data){
-    return axios.post(url, data)
-    .then((response) => {
-        return response
-    })   
-};
-
-//Describe what the player holds methods
+//Describe what the player holds methods  - TO BE REMOVED
 let inventory_local = function(next){
-    getPlayerItems(items=>{
-        if(items.length){
-            desc(`You have ${items.length} items`);
-            describe_items(items);
-        } else {
-            desc(`You don't have anything.`);
-        }
-        next();
-    });
+    // getPlayerItems(items=>{
+    //     if(items.length){
+    //         desc(`You have ${items.length} items`);
+    //         describe_items(items);
+    //     } else {
+    //         desc(`You don't have anything.`);
+    //     }
+    //     next();
+    // });
 };
 
-let inventory_api = function(next){
-    call_api(`${config.baseURL}/api/items/player/${world.playerNodeID}`,(items)=>{
+let inventory_api = async function(next){
+    try {
+        //let items = await call_api(`${process.env.API_BASE_HOST}/api/items/player/${world.playerNodeID}`)
+        let items = await API.get('base', `items/player/${world.playerNodeID}`)
         desc(`You have ${items.length} item(s)`);
         items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
-        next();
-    });
+    } catch(e) {
+        error("Error calling API for look "+e.toString())        
+    }
+    next();    
 };
 
-//looking about methods
+//looking about methods  - TO BE REMOVED
 let look_local = function(next){
-    process.stdout.write("Looking ... ".green);
-    //Only does current room and exists so far, but should do items in rooms too
-    query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
-        describe(rooms);
-        //When have a generic describer, should push this function down
-        getExits((doors)=>{
-            desc(`There are exits to the${doors.map((e)=>{return " " + e.label.white}).join()}`);
-            getItems((items)=>{
-                if(items.length){
-                    desc(`You also see ${items.length} item(s)`);
-                    describe_items(items);
-                } else {
-                    desc(`There is nothing else to see`);
-                }
-                next();
-            });
-        });
-    });
+    // process.stdout.write("Looking ... ".green);
+    // //Only does current room and exists so far, but should do items in rooms too
+    // query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
+    //     describe(rooms);
+    //     //When have a generic describer, should push this function down
+    //     getExits((doors)=>{
+    //         desc(`There are exits to the${doors.map((e)=>{return " " + e.label.white}).join()}`);
+    //         getItems((items)=>{
+    //             if(items.length){
+    //                 desc(`You also see ${items.length} item(s)`);
+    //                 describe_items(items);
+    //             } else {
+    //                 desc(`There is nothing else to see`);
+    //             }
+    //             next();
+    //         });
+    //     });
+    // });
 };
 
-let look_api = function(next){
-    call_api(`${config.godURL}/api/room/${world.playerCurrentRoomID}/look`,(result)=>{
-        desc(result.gameMsg);
-        next();
-    });
-    /*
-    call_api(`${config.baseURL}/api/players/${world.playerNodeID}/look`,(result)=>{
-        result.locations.forEach(location=>desc(location.description));
-        if(result.doors && result.doors.length){
-            desc(`There are ${result.doors.length} door(s) to the`.grey);
-            desc(`  ${result.doors.map(d=>d.name).join(", ").white}`);
-        } else desc('There is no way out!'.grey);
-        if(result.items && result.items.length){
-            desc(`You also see ${result.items.length} item(s)`.grey);
-            result.items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
-        } else desc("You don't see any items.".grey);
-        if(result.npcs && result.npcs.length){
-            desc(`You also see ${result.npcs.length} figures(s)`.grey);
-            result.npcs.forEach(npc=>desc(`  ${npc.name.white}`));
-        } else desc("You are alone in this room.".grey);
-        next();
-    });
-    */
+let look_api = async function(next){
+    try {
+        //let lookResult = await call_api(`${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
+        let lookResult = await API.get('god', `room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
+        desc(lookResult.gameMsg);
+    } catch(e) {
+        error("Error calling API for look "+e.toString())        
+    }
+    next();
 };
 
 
 //This detaches the item from the room and attaches it to the player.
-let take = function(words,next){
+let take = async function(words, next){
     let desired = words[1];
     debug(`you want the '${desired}'`);
-    getItems(items=>{
-        if(items.length){
-            let found = items.filter(e=>(e.properties.name[0].value===desired));
-            if(found.length===1){
-                let item = found[0];
-                debug(JSON.stringify(item.id));
-                info(`You reach out for the '${item.properties.name[0].value}'`);
-                query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
-                    {itemid:item.id},
-                    (results)=>{
-                        info(`You grasp the '${item.properties.name[0].value}'`);
-                        query("g.v('id',playerId).addE('holds').to(g.v('id',itemid))",
-                            {playerId:world.playerNodeID,itemid:item.id},
-                            (results)=>{
-                                info(`The '${item.properties.name[0].value}' is now yours!`);
-                                next();
-                            }
-                        );
-                    });
-            } else {
-                info(`There there is no '${desired}'`);
-                next();//next here to prevent 'fall through'
-            }
-        } else {
-            info(`There are no items here so you can't take '${desired}'`);
-            next();//next here to prevent 'fall through'
+
+    // Check item is here! - EDGE CASE NOT HANDLED: Multiple items with same name!
+    let itemsHereRes = await gremlin.getEntitiesOut(world.playerCurrentRoomID, 'holds')
+    let item
+    for(let itemRes of itemsHereRes) {
+        item = gremlin.rehydrateEntity(itemRes, Item)
+        if(item.name === desired) break
+    }
+
+    if(item) {
+        info(`You reach out and grab the '${desired}'...`);
+        try {
+            // Taking items is the same as moving, the in/out direction on the edge is reversed
+            await gremlin.moveEntityIn(item.id, 'holds', world.playerNodeID);
+            info(`The ${desired} is now yours!`);
+        } catch(e) {
+            info(`You fail to pick up the ${desired}`);
         }
-    });
+        next();        
+        return;
+    }
+    
+    info(`There there is no '${desired}' here!`);
+    next();
 };
 
-//This detaches the item from the player and attaches it to the room. Dedupe with above?
-let drop = function(words,next){
+let drop = async function(words, next){
     let desired = words[1];
     debug(`you want to drop the '${desired}'`);
-    getPlayerItems(items=>{
-        if(items.length){
-            let found = items.filter(e=>(e.properties.name[0].value===desired));
-            if(found.length===1){
-                let item = found[0];
-                debug(JSON.stringify(item.id));
-                info(`You hold '${item.properties.name[0].value}' in front of you and let go.`);
-                query("g.v('id',itemid).inE('label','holds').drop()", //we disconnect from what ever is holding (room).
-                    {itemid:item.id},
-                    (results)=>{
-                        info(`The '${item.properties.name[0].value}' falls`);
-                        query("g.v('id',playerRoomId).addE('holds').to(g.v('id',itemid))",
-                            {playerRoomId:world.playerCurrentRoomID,itemid:item.id},
-                            (results)=>{
-                                info(`The '${item.properties.name[0].value}' is now now in the room!`);
-                                next();
-                            }
-                        );
-                    });
-            } else {
-                info(`You don't have '${desired}' to drop.`);
-                next();//next here to prevent 'fall through'
-            }
-        } else {
-            info(`You aren't holding anything so cannot drop the '${desired}'.`);
-            next();//next here to prevent 'fall through'
+
+    // Check item is in inventory - EDGE CASE NOT HANDLED: Multiple items with same name!
+    let itemsHereRes = await gremlin.getEntitiesOut(world.playerNodeID, 'holds')
+    let item
+    for(let itemRes of itemsHereRes) {
+        item = gremlin.rehydrateEntity(itemRes, Item)
+        if(item.name === desired) break
+    }
+
+    if(item) {
+        info(`You reach out and try to drop the '${desired}'...`);
+        try {
+            // Taking items is the same as moving, the in/out direction on the edge is reversed
+            await gremlin.moveEntityIn(item.id, 'holds', world.playerCurrentRoomID);
+            info(`The ${desired} drops to the floor!`);
+        } catch(e) {
+            info(`You fail to drop the ${desired}`);
         }
-    });
+        next();        
+        return;
+    }
+    
+    info(`You are not carrying '${desired}'!`);
+    next();
 };
 
 //This function moves the player to other locations. 
 //In the graph it disconnects the player 'in' edge from the current room node 
 //   and reconnects to the other end of the 'edge' to the new room. 
-let walk = function(words,next){
+let walk = async function(words,next){
     process.stdout.write(`[${words[0].green}ing .`.green);//To allow for multiple verbs
-    if(words.length>1){
-        let direction = words[1];
-        getExits((results)=>{//we want to make sure the users has specified a possibility
-            process.stdout.write(".".green);//this is a very basic 'progress bar' of dots
-            let chosen = results.filter((e)=>{return e.label===direction});
-            if(chosen.length===1){
-                //Need to investigte making this one query (more transactional and less prone to break)
-                query("g.v('id',playerId).outE('label','in').drop()",
-                    {playerId:world.playerNodeID},
-                    (results)=>{
-                        process.stdout.write(".".green);//progress
-                        //Add an edge from palyer to the 'end' of the 'door edge'.
-                        query("g.v('id',playerId).addE('in').to(g.v('id',newRoomId))",
-                            {playerId:world.playerNodeID,newRoomId:chosen[0].inV},
-                            (results)=>{
-                                world.playerCurrentRoomID = chosen[0].inV;//Update state
-                                game(" arrived!]");
-                                act("look",next); //Give the standard description of the new room.
-                        });
-                });
-            } else {//Feedback if the user has made a mistake
-                game(`There is no exit to the '${direction.white}']`);
-                next();
-            }
-        });
-    } else {
+    
+    if(words.length == 1) {
         console.log("You must say which way you want to go. For example 'walk north'");
         next();
+        return;
     }
+
+    let direction = words[1];
+    process.stdout.write(".".green);
+
+    // Get exits and see if user had picked one
+    let pathsRes = await gremlin.getLinksByLabel(world.playerCurrentRoomID, 'path');
+    let chosenRoom = pathsRes.filter(path => { return path.properties.name === direction });
+
+    if(chosenRoom.length === 1) {
+        world.playerCurrentRoomID = chosenRoom[0].inV;
+        await gremlin.moveEntityOut(world.playerNodeID, 'in', chosenRoom[0].inV);
+        game(" arrived!]");
+        await look_api(next)
+    } else {
+        game(`There is no exit to the '${direction.white}']`);
+        next();        
+    }
+    
+    next();
+};
+
+// This is going to be terrible
+let say = async function(words,next){
+    //let msg = words.slice(1, words.length).join("")
+    await API.postRoomMessage(world.playerCurrentRoomID, `${world.playerName} says: ` + words.slice(1, words.length).join(" "))
+    //     `${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/message`, {
+    //     message: `${world.playerName} says: ` + words.slice(1, words.length).join(" ")
+    // })
+    
+    next();
 };
 
 //This is the main 'parser' that turns a user input into the function call.
@@ -470,6 +444,9 @@ let act = function(command, next){
         case "engine:":
             engine(words,next);
             break;
+        case "say":
+            say(words,next);
+            break;            
         default:
             info("What?");
             next();
@@ -480,65 +457,128 @@ let act = function(command, next){
    SET UP FUNCTIONS
 */
 
-//Creates a player in a room if the player doesn't exist
-let bootstrap = function(next){
-    world.playerName = "First Player (for testing)";
-    query("g.addV('player').property('name',playerName).addE('in').to(g.addV('room'))",
-        {playerName:world.playerName},
-        (newEdges)=>{
-            world.playerNodeID = newEdges[0].outV;
-            info(`Your player ID is: '${ world.playerNodeID}' put this in config.js as 'config.playerVectorID'`);
-            debug(`new room '${newEdges[0].inV}'`)
-            next();
-        });
+// Creates a room if none exist
+let bootstrap = async function(next){
+    let room = new Room('start', 'The starting room');
+    let result = await gremlin.createEntity(room);
+    room.id = result[0].id;
+    info(`In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move`);
+    info(`\nThe universe now contains one room: '${room.id}'\n`);
+    info(`After this run BLAH BLAH and pass this new room ID`);
+    info(`Exiting, bye!`);
+    process.exit(0)
 };
 
-//Gets the player node id from the graph
-let setup_player = function(next){
+// Gets the player node id from the graph
+let setup_player = async function() {
     process.stdout.write("\t[Player ... ".grey);
-    query("g.V('id',playerVectorID)",
-        {playerVectorID:config.playerVectorID},//you are identified by your config file currently
-        (results)=>{
-            if(results.length===1){
-                world.playerNodeID = results[0].id;
-                world.playerName = results[0].properties.name[0].value;
-                debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
-                next();
-            } else if (results.length===0){
-                error("You have no players!");
-                debug("I will create one for you. When I am done, I will give you the ID to put in your config");
-                bootstrap(next);
-            } else {
-                error("\t[Too many player nodes with id in config.]");
-                next();
-            }
-        });
+
+    let results = await gremlin.getEntities('player', 'id', process.env.LOCAL_PLAYER_ID);
+
+    if(results.length === 1) {
+        world.playerNodeID = results[0].id;
+        world.playerName = results[0].properties.name[0].value;
+        debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
+        return true;
+    } else if (results.length===0){
+        error('\nPlayer not found, check env and LOCAL_PLAYER_ID is set correctly');
+        error('Or to create new player run: app.js addPlayer {roomId} {name} "{description}"');
+        return false;
+    } else {
+        error("\t[Too many player nodes with id");
+        return false;
+    }
 };
 
 //Collect the current room ID from the user in the graph
-let setup_room = function(next){
+let setup_room = async function(){
     process.stdout.write("\t[Room   ... ".grey);
-    query("g.v('id',playerId).out('in')",
-        {playerId:world.playerNodeID},
-        (results)=>{
-        //old_query(`g.v('id','${world.playerNodeID}').out('in')`,(results)=>{
-            if(results.length===1){
-                world.playerCurrentRoomID = results[0].id;
-                debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
-            } else {
-                error("\t[Player can only be in one room]");
-            }
-            next();
-    });
+    let results = await gremlin.getEntitiesOut(world.playerNodeID, 'in')
+    if(results.length === 1) {
+        world.playerCurrentRoomID = results[0].id;
+        debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
+        return true
+    } else {
+        error("\t[Player can only be in one room]");
+        return false
+    }
 };
+
+// Check we have at least one room
+let setup_world = async function() {
+    let rooms = await gremlin.getEntities('room', 'label', 'room')
+    if(rooms.length < 1) {
+        // No rooms! Trigger bootstrap and exit
+        await bootstrap();
+        return false
+    }
+    return true
+}
+
+let create_player = async function(roomId, name, description) {
+    let roomRes = await gremlin.getEntities('room', 'id', roomId)
+    if(roomRes.length != 1) { 
+        throw new Error(`Room '${roomId}' does not exist, can not create player!`)
+    }
+
+    let player = new Player(name, description);
+    let result
+    try {
+        result = await gremlin.createEntityLinkedTo(player, 'in', roomId);
+    } catch(e) {
+        console.error(e);
+        return null
+    }
+
+    player.id = result[0].id;
+    return player
+}
 
 //This is the main game setup. 
 //Other setup functions are all called from here. 
-let setup = function(next){
+let setup = async function(next) {
+    if(process.argv.length > 2) {
+        switch(process.argv[2].toLowerCase()) {
+            case 'addplayer':
+                if(process.argv.length < 6) { info('Syntax is: addPlayer {roomId} {name} "{description}"'); process.exit(1) }
+                info('Adding a new player...') 
+                try {
+                    let player = await create_player(process.argv[3], process.argv[4], process.argv[5])
+                    info(`Rejoyce! '${player.name}' has been beamed into the world\n`)
+                    info(`Now edit your .env file and set LOCAL_PLAYER_ID to be id: ${player.id}\n\nExiting...`)
+                    process.exit(0);
+                } catch(e) {
+                    console.log(e);
+                    process.exit(1);
+                }
+                break;
+            default:
+                if(!process.argv[2].includes('.env')) {
+                    error("Arguments to app.js can be: addplayer or a config.env file to load")
+                    process.exit(1);
+                }
+        }
+    }
+
     debug('[Setting up ...');
-    let last = ()=>{debug(' Setup complete!]\n');info("Use 'engine: (api|local)' to use API or LOCAL command eval.");next();}
-    let two = ()=>{setup_room(last);}
-    setup_player(two);//Call back style for chaining.
+    if(! await setup_world()) {
+        error('- Problem with world, exiting!')
+        process.exit(1)
+    }
+    if(! await setup_player()) {
+        error('- Problem with player, exiting!')
+        process.exit(1)
+    }   
+    if(! await setup_room()) {
+        error('- Problem with player current room, exiting!')
+        process.exit(1)
+    }      
+    
+    // Look at startup
+    await look_api(next)
+
+    // chaining stuff
+    next()
 };
 
 /* 
@@ -546,10 +586,10 @@ let setup = function(next){
 */
 
 //This is the main game loop.
-//It is asnyc and recursive to work with RL and Graph APIs.
+//It is async and recursive to work with RL and Graph APIs.
 let interactive = function(finalise){
-    rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n>`.green,(response)=>{
-        if(response === "quit") finalise();//This is the recursion exit.
+    rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n> `.green,(response)=>{
+        if(response === "quit" || response === "exit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
     });
 };
@@ -572,5 +612,27 @@ let kill = function(){
     process.exit();
 };
 
-//Begin!
+// =========================================================
+// Begin!
+// =========================================================
+
+// Otherwise start the game client
 setup(()=>{interactive(kill);});
+
+
+// Janky message comms test, looping polling thing
+// Not using API to keep overhead low - for now
+var lastCheck = new Date().getTime()
+setInterval(() => {
+    gremlin.getEntities('room', 'id', world.playerCurrentRoomID)
+    .then(roomRes => {
+        let room = gremlin.rehydrateEntity(roomRes[0], Room);
+        for(let msg of room.messages) {
+            if(msg.text.startsWith(`${world.playerName} says:`)) continue;
+            if(msg.timestamp > lastCheck)
+                post("\n" + msg.text); 
+        }
+        lastCheck = new Date().getTime();
+    })
+
+}, 8000);

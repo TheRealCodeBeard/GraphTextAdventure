@@ -13,10 +13,8 @@ let graph_style = [
         style: {
             'curve-style':'bezier',
             'label':'data(label)',
+            'arrow-scale': 2.5,
             'target-arrow-shape':'triangle-backcurve',
-            'target-arrow-color':'green',
-            'source-arrow-shape':'circle',
-            'source-arrow-color':'grey',
             'source-endpoint':'inside-to-node',
             'text-background-color':'white',
             'text-background-opacity':1
@@ -35,17 +33,18 @@ let resplafunt = function(data){
         the_data.push({
             data:{
                 id:element[0],
-                name:element[1],
-                description:element[2]
+                label:element[1],
+                description:element[2],
+                name:element[3],
             }
         });
     });
     
-    data.edges.forEach(element=>{
+    data.edges.forEach(element=>{    
         the_data.push({
             data:{
                 id:element.id,
-                label:element.label,
+                label: (element.properties && element.properties.name) ? `${element.label}: ${element.properties.name}` : element.label,
                 source:element.outV,
                 target:element.inV
             }
@@ -56,6 +55,7 @@ let resplafunt = function(data){
 };
 
 let player_root = 'http://localhost:5000';
+let god_root = 'http://localhost:7000';
 
 let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
 
@@ -110,6 +110,24 @@ let load_player_room_items = function(guid){
         });
 };
 
+// let debug_room = function(guid){
+//     fetch(`${god_root}/api/room/${guid}/look`)
+//         .then(response=>response.json())
+//         .then(data=>{
+//             document.getElementById('debug').innerHTML = `Room: ${guid}\n\n${data.gameMsg}`
+//         })
+// };
+
+let debug_entity = function(guid){
+    fetch(`${god_root}/api/entities/any/${guid}`)
+        .then(response=>response.json())
+        .then(data=>{
+            document.getElementById('debug').innerHTML = JSON.stringify(data.entities[0], null, 2)
+            hljs.highlightBlock(document.getElementById('debug'));
+        })
+};
+
+
 let go = function(){
     let lod = document.getElementById('loading');
     lod.innerHTML="Loading";
@@ -122,12 +140,27 @@ let go = function(){
                 style: graph_style,
                 layout: graph_layout
             });
-            cy.$('[name="room"]').style({ 'background-color': '#70594d' })
-            cy.$('[name="item"]').style({ 'background-color': '#37a6dd' })
-            cy.$('[name="player"]').style({ 'background-color': '#1fc14f' })
-            cy.$('[name="npc"]').style({ 'background-color':'#bc2b14'})
+            cy.$('[label="room"]').style({ 'background-color': '#70594d' })
+            cy.$('[label="item"]').style({ 'background-color': '#37a6dd' })
+            cy.$('[label="player"]').style({ 'background-color': '#1fc14f' })
+            cy.$('[label="npc"]').style({ 'background-color':'#bc2b14'})
             cy.$('[label="in"]').style({ 'line-color': '#8b27bc' })
             cy.$('[label="holds"]').style({ 'line-color': '#1fc4c6' })
+
+            // Click/select event
+            cy.on('click', evt => {
+                // Only work with nodes
+                if(evt.target.length > 0 && evt.target.isNode()) {
+                    // if(evt.target.data().label === 'room')
+                    //     debug_entity(evt.target.data().id);
+                    // else
+                    debug_entity(evt.target.data().id);
+                } else {
+                    document.getElementById('debug').innerHTML = ''
+                }
+            })
+            cy.fit()
+
             lod.innerHTML="";
         })
         .then(load_players);
