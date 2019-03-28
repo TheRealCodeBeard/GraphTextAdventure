@@ -16,9 +16,6 @@ The main API is at `/api/npcs`
 Routes are:
 ```
 POST /api/npcs/create
-GET /api/npcs/{id}
-GET /api/npcs/{id}/describe
-GET /api/npcs
 POST /api/npcs/{id}/damage
 PUT /api/npcs/{id}/move/{locationId}
 ```

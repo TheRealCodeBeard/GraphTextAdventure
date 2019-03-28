@@ -1,21 +1,35 @@
 # Base Alpine linux image with Node 10.x
 FROM node:10-alpine
 
-# Build time arguments
-LABEL version="0.0.1" 
-ARG basedir="."
+# Parameters, env vars and metadata
+LABEL version="0.0.2"
+ARG basedir="./npc"
+ARG sharedir="./shared"
 ENV NODE_ENV production
+ENV PORT 4000
 
-# Place our app here
-WORKDIR /app
-
-# NPM install packages
+# NPM install packages for NPC server
+WORKDIR /home/app/npc
 COPY ${basedir}/package*.json ./
 RUN npm install --production --silent
 
-# NPM is done, now copy in the the whole project to the workdir
-COPY ${basedir}/ .
+# NPM install packages for shared lib
+WORKDIR /home/app/shared
+COPY ${sharedir}/package*.json ./
+RUN npm install --production --silent
+
+# Copy in rest of shared lib
+WORKDIR /home/app/shared
+COPY ${sharedir}/lib ./lib/
+COPY ${sharedir}/consts.js .
+
+# Now the rest of the NPC server
+WORKDIR /home/app/npc
+COPY ${basedir}/server.js .
+COPY ${basedir}/lib/ ./lib/
+COPY ${basedir}/data/ ./data/
+COPY ${basedir}/api-routes/ ./api-routes/
 
 # Server params and startup
-EXPOSE 3000
+EXPOSE 4000
 CMD ["npm", "start"]

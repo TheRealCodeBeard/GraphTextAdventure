@@ -464,7 +464,7 @@ let bootstrap = async function(next){
     room.id = result[0].id;
     info(`In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move`);
     info(`\nThe universe now contains one room: '${room.id}'\n`);
-    info(`After this run BLAH BLAH and pass this new room ID`);
+    info(`After this add players by running: app.js addPlayer {roomId} {name} "{description}"`);
     info(`Exiting, bye!`);
     process.exit(0)
 };
