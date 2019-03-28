@@ -17,7 +17,9 @@
   },
   "author": "Phil Harvey",
   "contributors": [
-    { "name": "Ben Coleman" }
+    {
+      "name": "Ben Coleman"
+    }
   ],
   "license": "MIT",
   "bugs": {
