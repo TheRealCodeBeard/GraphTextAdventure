@@ -9,7 +9,7 @@ const API = require('../../shared/lib/api')
 //
 // Describe and look at a room, filterId is optional, if provided will be removed from results
 // 
-router.get('/api/room/:id/look/:filterId?', async (req, res) => {
+router.get('/api/room/:id/look', async (req, res) => {
     try {
         // Array of stuff we find to send back over the API
         let entities = []
@@ -22,12 +22,12 @@ router.get('/api/room/:id/look/:filterId?', async (req, res) => {
 
         // The things "in" the room (players and NPCs)
         results = await gremlin.getEntitiesIn(req.params.id, 'in');
-        results = results.filter(r => r.id == req.params.filterId ? false : true );
+        results = results.filter(r => r.id == req.query.filter ? false : true );
         desc += describeEntities(results, "You can see:", "", entities)
 
         // The things "held" by the room (items)
         results = await gremlin.getEntitiesOut(req.params.id, 'holds');
-        results = results.filter(r => r.id == req.params.filterId ? false : true );
+        results = results.filter(r => r.id == req.query.filter ? false : true );
         desc += describeEntities(results, "At your feet there are:", "", entities)
 
         // And the exits
@@ -100,17 +100,13 @@ router.get('/api/entities/:label/:id', async (req, res) => {
 // Post a message to the room's postbox
 //
 router.post('/api/room/:id/message', async (req, res) => {
-    console.log("!!!!!!!! POSTING", req.body.message, req.params.id);
-    
     try {
-        let roomRes = await gremlin.getEntities('room', 'id', req.params.id);
+        let roomRes = await gremlin.getEntities('room', 'id', req.params.id);      
         let room = gremlin.rehydrateEntity(roomRes[0], Room);        
         room.addMessage(req.body.message);
         await gremlin.updateEntity(req.params.id, room);
         API.sendOne(res, "success", "", room);
     } catch(e) {
-        console.log(e);
-        
         console.error(`### ERROR: ${e.toString()}`);
         API.send500(res, e.toString())
     }

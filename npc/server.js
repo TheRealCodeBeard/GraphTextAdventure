@@ -1,8 +1,6 @@
 // Config file loading - MUST be before requiring the Gremlin wrapper(s)
-if(process.argv.length === 3 && process.argv[2].includes('.env'))
-    require('dotenv').config({ path: process.argv[2] })
-else 
-    require('dotenv').config({ path: '../.env' })
+require('dotenv').config({ path: '../.env' })
+require('dotenv').config({ path: '.env' })
     
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -42,15 +40,15 @@ expressSwagger(swaggerOptions);
 
 // ---- get API metadata from base server - NOT USED FOR ANYTHING YET! ----
 
-require('axios').get(`${API_BASE_HOST}/.well-known/gta-metadata`)
-.then(resp => {
-  exports.METADATA = resp.data
-  console.error(`### Fetched API metadata ${exports.METADATA.version}`);
-})
-.catch(err => {
-  if(err)
-  console.error("### ERROR! Unable to fetch API metadata! Things will not be good");
-});
+// require('axios').get(`${API_BASE_HOST}/.well-known/gta-metadata`)
+// .then(resp => {
+//   exports.METADATA = resp.data
+//   console.error(`### Fetched API metadata ${exports.METADATA.version}`);
+// })
+// .catch(err => {
+//   if(err)
+//   console.error("### ERROR! Unable to fetch API metadata! Things will not be good");
+// });
 
 // ---- NPC service specific code ----
 

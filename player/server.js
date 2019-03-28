@@ -1,8 +1,6 @@
 // Config file loading - MUST be before requiring the Gremlin wrapper(s)
-if(process.argv.length === 3 && process.argv[2].includes('.env'))
-    require('dotenv').config({ path: process.argv[2] })
-else 
-    require('dotenv').config({ path: '../.env' })
+require('dotenv').config({ path: '../.env' })
+require('dotenv').config({ path: '.env' })
     
 const express = require('express');
 const bodyParser = require('body-parser');

@@ -6,7 +6,7 @@ const Utils = require('./utils')
 const Server = require('../../npc/server')
 require('../consts')
 
-class NPC {
+module.exports = class NPC {
   constructor(type) {
     // IMPORTANT EVERY ENTITY MUST DO THIS!
     Object.assign(this, new Entity())
@@ -99,5 +99,3 @@ class NPC {
     this.updateDescription()
   }
 }
-
-module.exports = NPC

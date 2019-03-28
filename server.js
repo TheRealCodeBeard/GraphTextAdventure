@@ -1,8 +1,5 @@
 // Config file loading - MUST be before requiring the Gremlin wrapper(s)
-if(process.argv.length === 3 && process.argv[2].includes('.env'))
-    require('dotenv').config({ path: process.argv[2] })
-else 
-    require('dotenv').config()
+require('dotenv').config({ path: '.env' })
     
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -110,7 +107,7 @@ app.get('/api/players', (req,res)=>{
 */
 
 //
-// API discovery
+// API discovery - I NOW THINK THIS IS A BAD IDEA
 //
 app.get('/.well-known/gta-metadata', async (req, res)=>{
     res.send({
@@ -121,4 +118,4 @@ app.get('/.well-known/gta-metadata', async (req, res)=>{
     })
 });
 
-app.listen(port, () => console.log(`Bloated old server listening on port ${port}!`));
+app.listen(port, () => console.log(`### Legacy Base Server listening on port ${port}!`));

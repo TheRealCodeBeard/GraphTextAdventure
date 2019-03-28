@@ -45,7 +45,7 @@ router.post('/api/npcs/create', async function (req, res, next) {
     npc.id = gremlinRes[0].id
 
     debug(`Created NPC ${gremlinRes[0].id} in location ${locationId}`)
-    API.sendRoomMessage(locationId, `${npc.description} has spawned here!`)
+    API.postRoomMessage(locationId, `${npc.description} has spawned here!`)
 
     // Send back the NPC in an API payload with a message
     API.sendOne(res, "success", `A ${npc.npcDesc} ${npc.name} spawns`, npc)
@@ -102,7 +102,7 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
 router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
   try {
     await gremlin.moveEntityOut(req.params.id, 'in', req.params.locationId)
-    API.sendRoomMessage(req.params.locationId, `A NPC has wandered in`)
+    API.postRoomMessage(req.params.locationId, `A NPC has wandered in`)
 
     API.sendOne(res, "success", "The NPC moves to another location", {})
   } catch(e) {

@@ -44,7 +44,7 @@ let serializeEntity = function(entity) {
     delete copy.id
     delete copy.name
     delete copy.description
-    delete copy.label
+    delete copy.label    
     return JSON.stringify(copy)
 }
 
@@ -198,14 +198,15 @@ let getLinksByLabel = function(id, linkLabel) {
 }
 
 //
-// update an entity, is is assumed that label and name properties are immutable 
+// update an entity, label property can NEVER change
 //
 let updateEntity = function(id, entity) { 
     return query(
         `g.v(id).hasLabel(label)
         .property('description', description)
+        .property('name', name)
         .property('data', data)`, 
-        { label: entity.label, id: id, data: serializeEntity(entity), description: entity.description }
+        { label: entity.label, id: id, data: serializeEntity(entity), description: entity.description, name: entity.name }
     )
 }
 

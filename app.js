@@ -18,7 +18,7 @@ const readline = require('readline');
 const colors = require('colors');
 const gremlin = require("./shared/lib/gremlin-wrapper-v2");
 
-const axios = require('axios')
+const API = require('./shared/lib/api')
 
 const Player = require('./shared/lib/player')
 const Room = require('./shared/lib/room')
@@ -145,7 +145,8 @@ let make_item = async function(words,next){
 let make_npc = async function(words, next){
     let type = words[2];
     try {
-        let resp = await call_api_post(`${process.env.API_NPC_HOST}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
+        //let resp = await call_api_post(`${process.env.API_NPC_HOST}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
+        let resp = await API.post('npc', `npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
         if(resp) info(`${resp.gameMsg} before your very eyes!`);
     } catch(e) {
         error(`Failed to spawn NPC. ${e.toString()}`);
@@ -237,31 +238,6 @@ let describe_items = function(items){
     }
 };
 
-//the wrapper method for calling the API based engine   - TO BE REMOVED
-// !!TODO!! move this to Axios as well
-// let call_api = function(call,next){
-//     http.get(call,resp=>{
-//         let data = '';
-//         resp.on('data',chunk=>data +=chunk);
-//         resp.on('end',()=>next(JSON.parse(data)));
-//     });
-// };
-
-let call_api = function(url){
-    return axios.get(url)
-    .then((response) => {      
-        return response.data
-    })  
-};
-
-// Make a HTTP post call
-let call_api_post = function(url, data){
-    return axios.post(url, data)
-    .then((response) => {
-        return response.data
-    })   
-};
-
 //Describe what the player holds methods  - TO BE REMOVED
 let inventory_local = function(next){
     // getPlayerItems(items=>{
@@ -277,7 +253,8 @@ let inventory_local = function(next){
 
 let inventory_api = async function(next){
     try {
-        let items = await call_api(`${process.env.API_BASE_HOST}/api/items/player/${world.playerNodeID}`)
+        //let items = await call_api(`${process.env.API_BASE_HOST}/api/items/player/${world.playerNodeID}`)
+        let items = await API.get('base', `items/player/${world.playerNodeID}`)
         desc(`You have ${items.length} item(s)`);
         items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
     } catch(e) {
@@ -310,7 +287,8 @@ let look_local = function(next){
 
 let look_api = async function(next){
     try {
-        let lookResult = await call_api(`${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/look/${world.playerNodeID}`)
+        //let lookResult = await call_api(`${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
+        let lookResult = await API.get('god', `room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
         desc(lookResult.gameMsg);
     } catch(e) {
         error("Error calling API for look "+e.toString())        
@@ -413,9 +391,10 @@ let walk = async function(words,next){
 // This is going to be terrible
 let say = async function(words,next){
     //let msg = words.slice(1, words.length).join("")
-    call_api_post(`${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/message`, {
-        message: `${world.playerName} says: ` + words.slice(1, words.length).join(" ")
-    })
+    await API.postRoomMessage(world.playerCurrentRoomID, `${world.playerName} says: ` + words.slice(1, words.length).join(" "))
+    //     `${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/message`, {
+    //     message: `${world.playerName} says: ` + words.slice(1, words.length).join(" ")
+    // })
     
     next();
 };
@@ -529,6 +508,7 @@ let setup_room = async function(){
 let setup_world = async function() {
     let rooms = await gremlin.getEntities('room', 'label', 'room')
     if(rooms.length < 1) {
+        // No rooms! Trigger bootstrap and exit
         await bootstrap();
         return false
     }

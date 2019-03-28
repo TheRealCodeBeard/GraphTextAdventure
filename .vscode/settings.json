@@ -3,12 +3,12 @@
     "terminal.background": "#0e1018",
     "terminal.ansiBlack": "#000",
     "terminal.ansiBlue": "#59a1ff",
-    "titleBar.activeBackground": "#66209b",
-    "titleBar.inactiveBackground": "#66209b99",
+    "titleBar.activeBackground": "#706354",
+    "titleBar.inactiveBackground": "#70635499",
     "titleBar.activeForeground": "#e7e7e7",
     "titleBar.inactiveForeground": "#e7e7e799",
-    "statusBar.background": "#66209b",
-    "statusBarItem.hoverBackground": "#8229c5",
+    "statusBar.background": "#706354",
+    "statusBarItem.hoverBackground": "#8d7d6a",
     "statusBar.foreground": "#e7e7e7"
   }
 }

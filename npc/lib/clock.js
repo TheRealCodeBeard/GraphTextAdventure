@@ -6,6 +6,7 @@ const supertest = require('supertest'); // Allows calling of API routes internal
 const RPG = require('../../shared/lib/rpg')
 const Server = require('../server')
 const axios = require('axios')
+const API = require('../../shared/lib/api')
 require('../../shared/consts')
 
 let moveTick = 0
@@ -19,12 +20,12 @@ async function npcClockLoop() {
       // Server.app give us the main Express instance
       // supertest lets us run/call HTTP routes through it
       let app = Server.app
-      let npcsResp = await axios.get(`${Server.METADATA.npcEndpoint}/api/npcs`)
+      let npcsResp = await API.get('npc', 'npcs')
       for(let npc of npcsResp.data.entities) {
         let willMove = RPG.skillCheck(npc.moveChance, 0)
         console.log(`${npc.name} ${npc.id} Moving: ${willMove}`);
         if(willMove) {
-          await axios.put(`${Server.METADATA.npcEndpoint}/api/npcs/${npc.id}/move/b80c8112-f389-49a7-8cf6-4aad3b3ec601`)
+          await axios.put(`${process.env.API_NPC_HOST}/api/npcs/${npc.id}/move/b80c8112-f389-49a7-8cf6-4aad3b3ec601`)
         }
       }
     } catch(e) {
