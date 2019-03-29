@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 const port = parseInt(process.env.PORT) || 3000;
 
 // Serve the site
-app.use(express.static('site'))
+app.use(express.static(`${__dirname}/site`))
 
 app.get('/api/current',(req, res) => {
     gwr.return_current((result)=>{
