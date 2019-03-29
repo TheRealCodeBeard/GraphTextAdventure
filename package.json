@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/TheRealCodeBeard/GraphTextAdventure#readme",
   "dependencies": {
+    "shared": "file:shared",
     "client-console": "file:clients/console",
     "god-api": "file:god",
     "npc-api": "file:npc",
