@@ -9,7 +9,7 @@
     "all-mon": "concurrently --kill-others \"nodemon npc/server.js\" \"nodemon god/server.js\" \"nodemon player/server.js\" \"nodemon world/server.js\"",
     "console": "node clients/console/app.js",
     "console-mon": "nodemon clients/console/app.js",
-    "dev": "npm run mon & npm run app-mon"
+    "dev": "npm run all-mon & npm run console-mon"
   },
   "repository": {
     "type": "git",
