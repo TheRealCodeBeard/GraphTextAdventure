@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "npm run all",
-    "all": "concurrently --kill-others 'node npc/server.js' 'node god/server.js' 'node player/server.js' 'node world/server.js'",
-    "all-mon": "concurrently --kill-others 'nodemon npc/server.js' 'nodemon god/server.js' 'nodemon player/server.js' 'nodemon world/server.js'",
+    "all": "concurrently --kill-others \"node npc/server.js\" \"node god/server.js\" \"node player/server.js\" \"node world/server.js\"",
+    "all-mon": "concurrently --kill-others \"nodemon npc/server.js\" \"nodemon god/server.js\" \"nodemon player/server.js\" \"nodemon world/server.js\"",
     "console": "node clients/console/app.js",
     "console-mon": "nodemon clients/console/app.js",
     "dev": "npm run mon & npm run app-mon"
