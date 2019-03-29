@@ -21,11 +21,10 @@ RUN npm install --production --silent
 # Copy in rest of shared lib
 WORKDIR /home/app/shared
 COPY ${sharedir}/lib ./lib/
-COPY ${sharedir}/consts.js .
 
 # Now the rest of the NPC server
 WORKDIR /home/app/npc
-COPY ${basedir}/server.js .
+COPY ${basedir}/*.js ./
 COPY ${basedir}/lib/ ./lib/
 COPY ${basedir}/data/ ./data/
 COPY ${basedir}/api-routes/ ./api-routes/

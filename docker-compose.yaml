@@ -1,0 +1,25 @@
+version: '3'
+
+# This file is intended for local testing and development
+# Not for use with Docker Swarm or deployment to a real Swarm cluster
+
+services:
+  npc-service:
+    image: ${DOCKER_REG}gta/npc${DOCKER_TAG}
+    build: 
+      context: .
+      dockerfile: npc/Dockerfile
+    ports: 
+      - 4000:4000
+    env_file:
+      - .env
+
+  god-service:
+    image: ${DOCKER_REG}gta/god${DOCKER_TAG}
+    build: 
+      context: .
+      dockerfile: god/Dockerfile
+    ports: 
+      - 7000:7000
+    env_file:
+      - .env

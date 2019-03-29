@@ -16,13 +16,13 @@ else
 
 const readline = require('readline');
 const colors = require('colors');
-const gremlin = require("./shared/lib/gremlin-wrapper-v2");
+const gremlin = require('../../shared/lib/gremlin-wrapper-v2');
 
-const API = require('./shared/lib/api')
+const API = require('../../shared/lib/api')
 
-const Player = require('./shared/lib/player')
-const Room = require('./shared/lib/room')
-const Item = require('./shared/lib/item')
+const Player = require('../../shared/lib/player')
+const Room = require('../../shared/lib/room')
+const Item = require('../../shared/lib/item')
 
 //Write to the console in the debug colour.
 let debug = function(text){ console.log(text.grey); };
@@ -31,8 +31,6 @@ let game = function(text){ console.log(text.green); };
 let info = function(text){ console.log(text.yellow); };
 let desc = function(text){ console.log(text.cyan); };
 let post = function(text){ console.log(text.magenta); };
-
-let use_api = true;
 
 /* 
    UTILITY FUNCTIONS
@@ -43,25 +41,6 @@ let test = function(next){
     error('No test code currently live')
     next();
 };
-
-let engine = function(words,next){
-    if(words.length===2 && words[1]==='api'){
-        use_api = true;
-        debug("Using API Engine");
-    } else if (words.length===2 && words[1]==='local'){
-        use_api = false;
-        debug("Using Local Engine");
-    } else {
-        error("Only options are 'engine: api' or 'engine: local'");
-    }
-    next();
-};
-
-//This retuns the 'out edges' from the players current room. An out edge represents a door.
-// let getExits = async function(next){
-//     let result = await gremlin.getEntitiesOutToLabel(world.playerCurrentRoomID, 'room');
-//     return result;
-// };
 
 debug("[Graph connection established]");
 
@@ -197,13 +176,6 @@ let add_description = async function(words,next) {
    STANDARD ACTION FUNCTIONS
 */
 
-//This method respects the engine flab but also any user given overrides
-let api_switch = function(words,api,local,next){
-    if(words.length>1 && words[1]==="api") api(next);
-    else if(words.length>1 && words[1]==="local") local(next);
-    else use_api ? api(next) : local(next);
-};
-
 //This provides the description property of the first rooms in the array given.
 //Should turn this into a generic 'describer' that takes in any kind of object array and collates whole description
 let describe = function(rooms){
@@ -238,22 +210,8 @@ let describe_items = function(items){
     }
 };
 
-//Describe what the player holds methods  - TO BE REMOVED
-let inventory_local = function(next){
-    // getPlayerItems(items=>{
-    //     if(items.length){
-    //         desc(`You have ${items.length} items`);
-    //         describe_items(items);
-    //     } else {
-    //         desc(`You don't have anything.`);
-    //     }
-    //     next();
-    // });
-};
-
 let inventory_api = async function(next){
     try {
-        //let items = await call_api(`${process.env.API_BASE_HOST}/api/items/player/${world.playerNodeID}`)
         let items = await API.get('base', `items/player/${world.playerNodeID}`)
         desc(`You have ${items.length} item(s)`);
         items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
@@ -261,28 +219,6 @@ let inventory_api = async function(next){
         error("Error calling API for look "+e.toString())        
     }
     next();    
-};
-
-//looking about methods  - TO BE REMOVED
-let look_local = function(next){
-    // process.stdout.write("Looking ... ".green);
-    // //Only does current room and exists so far, but should do items in rooms too
-    // query("g.v('id',playerRoomId)",{playerRoomId:world.playerCurrentRoomID},(rooms)=>{
-    //     describe(rooms);
-    //     //When have a generic describer, should push this function down
-    //     getExits((doors)=>{
-    //         desc(`There are exits to the${doors.map((e)=>{return " " + e.label.white}).join()}`);
-    //         getItems((items)=>{
-    //             if(items.length){
-    //                 desc(`You also see ${items.length} item(s)`);
-    //                 describe_items(items);
-    //             } else {
-    //                 desc(`There is nothing else to see`);
-    //             }
-    //             next();
-    //         });
-    //     });
-    // });
 };
 
 let look_api = async function(next){
@@ -295,7 +231,6 @@ let look_api = async function(next){
     }
     next();
 };
-
 
 //This detaches the item from the room and attaches it to the player.
 let take = async function(words, next){
@@ -389,13 +324,8 @@ let walk = async function(words,next){
 };
 
 // This is going to be terrible
-let say = async function(words,next){
-    //let msg = words.slice(1, words.length).join("")
+let say = async function(words,next) {
     await API.postRoomMessage(world.playerCurrentRoomID, `${world.playerName} says: ` + words.slice(1, words.length).join(" "))
-    //     `${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/message`, {
-    //     message: `${world.playerName} says: ` + words.slice(1, words.length).join(" ")
-    // })
-    
     next();
 };
 
@@ -406,11 +336,11 @@ let act = function(command, next){
     switch(words[0]) {
         case "l": 
         case "look": 
-            api_switch(words,look_api,look_local,next);
+            look_api(next);
             break;
         case "i":
         case "inventory":
-            api_switch(words,inventory_api,inventory_local,next);
+            inventory_api(next);
             break;
         case "make":
             make(words,next);
@@ -440,9 +370,6 @@ let act = function(command, next){
             break;
         case "test":
             test(next);
-            break;
-        case "engine:":
-            engine(words,next);
             break;
         case "say":
             say(words,next);
@@ -588,7 +515,7 @@ let setup = async function(next) {
 //This is the main game loop.
 //It is async and recursive to work with RL and Graph APIs.
 let interactive = function(finalise){
-    rl.question(`\n${use_api?"API":"LOCAL"}: [What would you like to do?]\n> `.green,(response)=>{
+    rl.question(`\n[What would you like to do?]\n> `.green,(response)=>{
         if(response === "quit" || response === "exit") finalise();//This is the recursion exit.
         else act(response,()=>{interactive(finalise)});
     });
@@ -598,7 +525,7 @@ game(
 `                                  
    Welcome to the world creator   
                                   `
-.bgWhite
+.bgWhite.blue
 );
 
 //This is the 'clean' shut down, closing the 'readline' and and exiting the process.
@@ -607,7 +534,7 @@ let kill = function(){
 `        
   Bye!  
         `
-        .bgWhite);
+        .bgWhite.black);
     rl.close();
     process.exit();
 };

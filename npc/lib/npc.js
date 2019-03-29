@@ -1,10 +1,8 @@
-const NameGenerator = require('./name-gen')
-const RPG = require('./rpg')
-const GameAttributes = require('./game-atrributes')
-const Entity = require('./entity')
-const Utils = require('./utils')
-const Server = require('../../npc/server')
-require('../consts')
+const NameGenerator = require('../../shared/lib/name-gen')
+const RPG = require('../../shared/lib/rpg')
+const GameAttributes = require('../../shared/lib/game-atrributes')
+const Entity = require('../../shared/lib/entity')
+const Server = require('../server')
 
 module.exports = class NPC {
   constructor(type) {

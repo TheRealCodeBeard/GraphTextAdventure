@@ -4,7 +4,7 @@ require('dotenv').config({ path: '.env' })
     
 const express = require('express');
 const bodyParser = require('body-parser');
-require('../shared/consts')
+require('./consts')
 
 // ---- Common stuff most severs will do ----
 

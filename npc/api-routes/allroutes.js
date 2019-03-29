@@ -1,6 +1,6 @@
 var express = require('express')
 var router = express.Router()
-const NPC = require('../../shared/lib/npc')
+const NPC = require('../lib/npc')
 const API = require('../../shared/lib/api')
 
 const gremlin = require('../../shared/lib/gremlin-wrapper-v2')

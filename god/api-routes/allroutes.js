@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
+const colors = require('colors');
 const Entity = require('../../shared/lib/entity');
 const Room = require('../../shared/lib/room');
 const gremlin = require('../../shared/lib/gremlin-wrapper-v2');
@@ -16,27 +17,25 @@ router.get('/api/room/:id/look', async (req, res) => {
 
         // Handle the room itself
         let results = await gremlin.getEntities('room', 'id', req.params.id);
-        let room = gremlin.rehydrateEntity(results[0], Entity)
-        entities.push(room)
+        let room = gremlin.rehydrateEntity(results[0], Entity);
+        entities.push(room);
         let desc = `You are in: ${room.description}\n`;
 
         // The things "in" the room (players and NPCs)
         results = await gremlin.getEntitiesIn(req.params.id, 'in');
-        results = results.filter(r => r.id == req.query.filter ? false : true );
-        desc += describeEntities(results, "You can see:", "", entities)
+        desc += describeEntities(results, "Here with you:".cyan, "", entities, req.query.filter);
 
         // The things "held" by the room (items)
         results = await gremlin.getEntitiesOut(req.params.id, 'holds');
-        results = results.filter(r => r.id == req.query.filter ? false : true );
-        desc += describeEntities(results, "At your feet there are:", "", entities)
+        desc += describeEntities(results, "At your feet you see:".cyan, "", entities, req.query.filter);
 
         // And the exits
-        desc += "There are exits: "
+        desc += "There are exits: ".cyan;
         results = await gremlin.query("g.v(id).outE().where(inV().hasLabel('room'))", {id: req.params.id});
         // Paths are described by their names, not labels
-        desc += results.map(d => d.properties.name).join(", ")
+        desc += results.map(d => d.properties.name).join(", ");
         // We fake the exits into pseudo entities even though they do not have names or descriptions (yet)
-        results.map(d => entities.push({ id: d.id, label: d.label, name: "exit", description: d.label }))
+        results.map(d => entities.push({ id: d.id, label: d.label, name: "exit", description: d.label }));
 
         // Send it back
         API.sendArray(res, "success", desc, entities);
@@ -56,7 +55,7 @@ router.get('/api/entities/any/:id', async (req, res) => {
         API.sendOne(res, "success", "", e);
     } catch(e) {
         console.error(`### ERROR: ${e.toString()}`);
-        API.send500(res, e.toString())
+        API.send500(res, e.toString());
     }
 });
 
@@ -66,15 +65,13 @@ router.get('/api/entities/any/:id', async (req, res) => {
 router.get('/api/entities/:label', async (req, res) => {
     try {
         let results = await gremlin.getEntities(req.params.label);
-        let entities = []
+        let entities = [];
         for(let res of results) {
-            let e = gremlin.rehydrateEntity(res, Entity);
-            entities.push(e)
+            let entity = gremlin.rehydrateEntity(res, Entity);
+            entities.push(entity);
         }
         API.sendArray(res, "success", "", entities);
     } catch(e) {
-        console.log(e);
-        
         console.error(`### ERROR: ${e.toString()}`);
         API.send500(res, e.toString())
     }
@@ -86,11 +83,9 @@ router.get('/api/entities/:label', async (req, res) => {
 router.get('/api/entities/:label/:id', async (req, res) => {
     try {
         let results = await gremlin.getEntities(req.params.label, 'id', req.params.id);
-        let e = gremlin.rehydrateEntity(results[0], Entity);
-        API.sendOne(res, "success", "", e);
+        let entity = gremlin.rehydrateEntity(results[0], Entity);
+        API.sendOne(res, "success", "", entity);
     } catch(e) {
-        console.log(e);
-        
         console.error(`### ERROR: ${e.toString()}`);
         API.send500(res, e.toString())
     }
@@ -112,19 +107,17 @@ router.post('/api/room/:id/message', async (req, res) => {
     }
 });
 
-
 // =================================================================
 
-function describeEntities(results, prefixText, nothingText, entities) {
+function describeEntities(results, prefixText, nothingText, entities, filter) {
     let desc = ""
-
     if (results && results.length > 0) {
         desc += `${prefixText}\n`;
         for(let res of results) {
-            //if(res.label === 'player') continue;
-            let e = gremlin.rehydrateEntity(res, Entity);
-            entities.push(e)
-            desc += `   (${e.name}) ${e.description}\n`
+            if(res.id == filter) continue;
+            let entity = gremlin.rehydrateEntity(res, Entity);
+            entities.push(entity);
+            desc += `   (${entity.name.grey}) ${entity.description}\n`.white;
         };
     } else {
         desc += nothingText;
@@ -132,4 +125,4 @@ function describeEntities(results, prefixText, nothingText, entities) {
     return desc
 }
 
-module.exports = router
+module.exports = router;

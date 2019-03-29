@@ -1,16 +1,18 @@
 // Config file loading - MUST be before requiring the Gremlin wrapper(s)
+require('dotenv').config({ path: '../.env' })
 require('dotenv').config({ path: '.env' })
     
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-const gwr = require("./shared/lib/gremlin_wrapper.js");
+const gwr = require('../shared/lib/gremlin_wrapper');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 const port = parseInt(process.env.PORT) || 3000;
 
+// Serve the site
 app.use(express.static('site'))
 
 app.get('/api/current',(req, res) => {
@@ -118,4 +120,4 @@ app.get('/.well-known/gta-metadata', async (req, res)=>{
     })
 });
 
-app.listen(port, () => console.log(`### Legacy Base Server listening on port ${port}!`));
+app.listen(port, () => console.log(`### Legacy World API Server listening on port ${port}!`));

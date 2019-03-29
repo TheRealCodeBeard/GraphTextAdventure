@@ -1,6 +1,8 @@
 # GraphTextAdventure
 Graph DB backed text adventure
 
+# BOY DOES THIS NEED A REWRITE! :)
+
 # intention
 This is a Node.js project to connect to Cosmos DB through the Gremlin API. The text adventure state is entierly stored within the graph within Cosmos DB. This script is a command line driven 'builder' application to allow a user to build a graph using text-adventure-like commands. There will eventually be a bot for playing the text adventure. The full state is saved in the graph to make the code as simple as possible and allow for multip player. I know it will be slower to do it this way.
 

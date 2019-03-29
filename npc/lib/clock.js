@@ -7,7 +7,7 @@ const RPG = require('../../shared/lib/rpg')
 const Server = require('../server')
 const axios = require('axios')
 const API = require('../../shared/lib/api')
-require('../../shared/consts')
+require('./consts')
 
 let moveTick = 0
 
