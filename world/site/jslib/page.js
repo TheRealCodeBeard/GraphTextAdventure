@@ -73,7 +73,7 @@ let set_player = function(guid){
 let load_players = function(){
     let ps = document.getElementById('player_list');
     ps.innerHTML="Loading...";
-    fetch(player_root+'/api/players')
+    fetch(god_root+'/api/entities/player')
         .then(response=>response.json())
         .then(data=>{
             ps.innerHTML = data.entities.map((player)=>'<div class="item"><span onclick="set_player(\''+player.id+'\')">'+player.id+"</span><span>"+player.name+"</span>");
