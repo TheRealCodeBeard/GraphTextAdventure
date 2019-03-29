@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+      "humao.rest-client",
+      "peterjausovec.vscode-docker",
+      "dbaeumer.vscode-eslint"
+  ]
+}

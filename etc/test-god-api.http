@@ -1,24 +1,25 @@
 @roomID = 43cf4d0c-777a-4ab3-b0d7-c44808384585
 
+###
 GET http://localhost:7000/api/room/{{roomID}}/look?filter=
+
 
 ###
 GET http://localhost:7000/api/entities/any/{{roomID}}
 
+
 ###
 GET http://localhost:7000/api/entities/room
+
 
 ###
 GET http://localhost:7000/api/entities/room/{{roomID}}
 
-###
 
+###
 POST http://localhost:7000/api/room/{{roomID}}/message
 content-type: application/json
 
 {
-  "message": "Another orc wanders in"
+  "message": "A mysterous voice booms out"
 }
-
-###
-GET http://localhost:7000/api/room/message/1553531933526

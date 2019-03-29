@@ -1,15 +1,25 @@
+#
+# Multipurpose Dockerfile used for all the servers
+#
+
 # Base Alpine linux image with Node 10.x
 FROM node:10-alpine
 
 # Parameters, env vars and metadata
-LABEL version="0.0.2"
-ARG basedir="./npc"
+# basedir and port MUST be provided at build time
+LABEL version="0.0.3"
+ARG basedir
+ARG port
 ARG sharedir="./shared"
 ENV NODE_ENV production
-ENV PORT 4000
+ENV PORT ${port}
 
-# NPM install packages for NPC server
-WORKDIR /home/app/npc
+# Trick to validate build arguments have been passed in
+RUN test -n "$basedir"
+RUN test -n "$port"
+
+# NPM install packages for server
+WORKDIR /home/app/${basedir}
 COPY ${basedir}/package*.json ./
 RUN npm install --production --silent
 
@@ -22,13 +32,10 @@ RUN npm install --production --silent
 WORKDIR /home/app/shared
 COPY ${sharedir}/lib ./lib/
 
-# Now the rest of the NPC server
-WORKDIR /home/app/npc
-COPY ${basedir}/*.js ./
-COPY ${basedir}/lib/ ./lib/
-COPY ${basedir}/data/ ./data/
-COPY ${basedir}/api-routes/ ./api-routes/
+# Now the rest of the server
+WORKDIR /home/app/${basedir}
+COPY ${basedir}/ ./
 
 # Server params and startup
-EXPOSE 4000
+EXPOSE ${port}
 CMD ["npm", "start"]

@@ -1,25 +1,28 @@
-### Create a NPC
+@locationId = 0226d0df-c70d-465e-8543-efc180b877cf
+@moveLocationId = 43cf4d0c-777a-4ab3-b0d7-c44808384585
+
+### Create a NPC 
 # @name create
 POST http://localhost:4000/api/npcs/create
 content-type: application/json
 
 {
   "type": "goblin",
-  "locationId": "9eab9861-6ce3-4b93-aaec-39c5868b7ea7"
+  "locationId": "{{locationId}}"
 }
 
 ### Get new NPC id
-@agentId = {{create.response.body.$.entities[0].id}}
-@newLocation = 464bff8e-08d1-4631-90d2-abab98643677
+@npcId = {{create.response.body.$.entities[0].id}}
+
 
 ### Get NPC  
-GET http://localhost:4000/api/npcs/{{agentId}}
+GET http://localhost:7000/api/entities/npc/{{npcId}}
 
 ### Get ALL NPCs
-GET http://localhost:4000/api/npcs
+GET http://localhost:7000/api/entities/npc
 
 ### Damage an NPC
-POST http://localhost:4000/api/npcs/{{agentId}}/damage
+POST http://localhost:4000/api/npcs/{{npcId}}/damage
 content-type: application/json
 
 {
@@ -27,4 +30,4 @@ content-type: application/json
 }
 
 ### Move a NPC somewhere
-PUT http://localhost:4000/api/npcs/{{agentId}}/move/464bff8e-08d1-4631-90d2-abab98643677
+PUT http://localhost:4000/api/npcs/{{npcId}}/move/{{moveLocationId}}
