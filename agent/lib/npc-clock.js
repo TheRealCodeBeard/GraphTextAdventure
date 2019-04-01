@@ -29,7 +29,7 @@ async function npcClockLoop() {
           let r = RPG.rand(1, roomResp.entities.length);
           direction = roomResp.entities[r].name;
           console.log(`### ~ ${npc.name} ${npc.id} Moving: ${direction}`);
-          await API.post('npc', `npcs/${npc.id}/walk`, {direction: direction});
+          await API.post('agent', `agent/${npc.id}/walk`, {direction: direction});
         }
       }
     } catch(e) {

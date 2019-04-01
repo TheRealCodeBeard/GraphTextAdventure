@@ -16,9 +16,9 @@ let mainRoutes = require('./api-routes/allroutes');
 app.use('/', mainRoutes);
 
 // Server port
-var port = process.env.PORT || 7000;
+var port = process.env.PORT || 5000;
 
 // Start the server
 var server = app.listen(port, function () {
-    console.log(`### God API Server listening on ${server.address().port}`);
-  });
+  console.log(`### God API Server listening on ${server.address().port}`);
+});

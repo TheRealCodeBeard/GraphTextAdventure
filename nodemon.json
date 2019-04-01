@@ -8,11 +8,8 @@
   "verbose": false,
   "watch": [
     "shared/",
-    "npc/",
+    "agent/",
     "god/",
-    "player/",
-    "app.js",
-    "server.js",
     ".env"
   ],
   "ext": "js json .env"

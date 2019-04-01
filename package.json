@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "npm run all",
-    "all": "concurrently --kill-others \"node npc/server.js\" \"node god/server.js\" \"node player/server.js\" \"node world/server.js\"",
-    "all-mon": "concurrently --kill-others \"nodemon npc/server.js\" \"nodemon god/server.js\" \"nodemon player/server.js\" \"nodemon world/server.js\"",
+    "all": "concurrently --kill-others \"node agent/server.js\" \"node god/server.js\" \"node world/server.js\"",
+    "all-mon": "concurrently --kill-others \"nodemon agent/server.js\" \"nodemon god/server.js\" \"nodemon world/server.js\"",
     "console": "node clients/console/app.js",
     "console-mon": "nodemon clients/console/app.js",
     "dev": "npm run all-mon & npm run console-mon"
@@ -30,8 +30,7 @@
     "shared": "file:shared",
     "client-console": "file:clients/console",
     "god-api": "file:god",
-    "npc-api": "file:npc",
-    "player-api": "file:player",
+    "agent-api": "file:agent",
     "world-api": "file:world"
   },
   "devDependencies": {

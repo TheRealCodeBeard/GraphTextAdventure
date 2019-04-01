@@ -124,7 +124,6 @@ let make_item = async function(words,next){
 let make_npc = async function(words, next){
     let type = words[2];
     try {
-        //let resp = await call_api_post(`${process.env.API_NPC_HOST}/api/npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
         let resp = await API.post('npc', `npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
         if(resp) info(`${resp.gameMsg} before your very eyes!`);
     } catch(e) {

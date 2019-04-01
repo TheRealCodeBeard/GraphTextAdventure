@@ -49,10 +49,12 @@ let resplafunt = function(data){
    return the_data;
 };
 
-let player_root = 'http://localhost:5000';
-let god_root = 'http://localhost:7000';
+let agent_root = 'http://localhost:4000';
+let god_root = 'http://localhost:5000';
 
-let item_to_html = (item)=>'<div class="item"><span>'+item.name+"</span><span>"+item.description+"</span>";
+let thing_to_html = function (thing) {
+    return `<div class="item-row"><span class="label-colour-${thing.label}">${thing.name}</span><span  class="label-colour-${thing.label}">${thing.description}</span></div>`;
+}
 
 let hidePlayerList = function(){
     document.getElementById('player_list').style.display="none";
@@ -62,7 +64,7 @@ let set_player = function(guid){
     document.getElementById('player_guid').innerHTML = guid;
     document.getElementById("player_information").style.display="block";
     load_player_items(guid);
-    load_player_room_items(guid);
+    load_player_room(guid);
 };
 
 let load_players = function(){
@@ -71,38 +73,51 @@ let load_players = function(){
     fetch(god_root+'/api/entities/player')
         .then(response=>response.json())
         .then(data=>{
-            ps.innerHTML = data.entities.map((player)=>'<div class="item"><span onclick="set_player(\''+player.id+'\')">'+player.id+"</span><span>"+player.name+"</span>");
+            ps.innerHTML = data.entities.map((player)=>'<div class="item-row"><span class="clickable" onclick="set_player(\''+player.id+'\')">'+player.id+"</span><span>"+player.name+"</span></div>").join("")
         });
 };
 
 let load_player_items = function(guid){
     let it = document.getElementById('player_items');
-    it.innerHTML="Loading items..."
-        fetch('./api/items/player/'+guid)
-        .then(response=>response.json())
-        .then(data=>it.innerHTML = data.map(item_to_html))
+    fetch(agent_root+`/api/agent/${guid}/items`)
+    .then(resp => resp.json())
+    .then(data => {
+        it.innerHTML = data.entities.map(thing_to_html).join("")
+    })
 };
 
-let load_player_room_items = function(guid){
+let load_player_room = function(guid){
     let r = document.getElementById('player_room');
-    r.innerHTML="Loading room..."
     let rit = document.getElementById('room_items');
-    rit.innerHTML="Loading items..."
-    fetch('./api/players/'+guid+"/room")
-        .then(response=>response.json())
-        .then(data=>{
-            let room = data[0];//assumptions, player can be in one room only
-            r.innerHTML = room.description + " (" + room.id + ")";
-            return room.id;
+    fetch(god_root+`/api/room/whereis/${guid}`)
+    .then(resp => resp.json())
+    .then(data => {
+        r.innerHTML = data.entities[0].description
+        return  data.entities[0].id;
+    })
+    .then(roomId => {
+        fetch(god_root+`/api/room/${roomId}/look`)
+        .then(resp => resp.json())
+        .then(data => {
+            if(data.entities.length > 0) rit.innerHTML = data.entities.map(thing_to_html).join("<br/>")
         })
-        .then(id=>{
-            return fetch('./api/items/room/'+id)
-            .then(response=>response.json())
-            .then(data=>{
-                if(data.length>0) rit.innerHTML = data.map(item_to_html)
-                else rit.innerHTML = "Nothing"
-            })
-        });
+    })
+
+    // fetch('./api/players/'+guid+"/room")
+    //     .then(response=>response.json())
+    //     .then(data=>{
+    //         let room = data[0];//assumptions, player can be in one room only
+    //         r.innerHTML = room.description + " (" + room.id + ")";
+    //         return room.id;
+    //     })
+    //     .then(id=>{
+    //         return fetch('./api/items/room/'+id)
+    //         .then(response=>response.json())
+    //         .then(data=>{
+    //             if(data.length>0) rit.innerHTML = data.map(item_to_html)
+    //             else rit.innerHTML = "Nothing"
+    //         })
+    //     });
 };
 
 // let debug_room = function(guid){
@@ -163,7 +178,7 @@ let go = function(){
 let dataRefresh = function() {
     var loading = document.getElementById('loading')
     loading.classList.add('is-visible');
-    fetch('./api/current')
+    fetch(`${god_root}/api/world/current`)
         .then(response=>response.json())
         .then(data=>{
             cy.remove("*")

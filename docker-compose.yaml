@@ -16,9 +16,7 @@ services:
     env_file:
       - .env
     environment: 
-      API_GOD_HOST: http://god-service:7000
-      API_WORLD_HOST: http://world-service:3000
-      API_PLAYER_HOST: http://player-service:5000
+      API_GOD_HOST: http://god-service:5000
 
   god-service:
     image: ${DOCKER_REG}gta/god${DOCKER_TAG}
@@ -33,9 +31,7 @@ services:
     env_file:
       - .env
     environment: 
-      API_NPC_HOST: http://npc-service:4000
-      API_WORLD_HOST: http://world-service:3000
-      API_PLAYER_HOST: http://player-service:5000
+      API_AGENT_HOST: http://npc-service:4000
 
   world-service:
     image: ${DOCKER_REG}gta/world${DOCKER_TAG}
@@ -50,23 +46,6 @@ services:
     env_file:
       - .env
     environment: 
-      API_GOD_HOST: http://god-service:7000
-      API_NPC_HOST: http://npc-service:4000
-      API_PLAYER_HOST: http://player-service:5000
+      API_GOD_HOST: http://god-service:5000
+      API_AGENT_HOST: http://npc-service:4000
 
-  player-service:
-    image: ${DOCKER_REG}gta/player${DOCKER_TAG}
-    build: 
-      context: .
-      dockerfile: Dockerfile
-      args: 
-        basedir: player
-        port: 5000
-    ports: 
-      - 5000:5000
-    env_file:
-      - .env
-    environment: 
-      API_GOD_HOST: http://god-service:7000
-      API_WORLD_HOST: http://world-service:3000
-      API_NPC_HOST: http://npc-service:4000  

@@ -166,6 +166,15 @@ let getEntities = function(label, propFilter = null, propFilterValue = null) {
     }
 }
 
+
+//
+// Get a single entity by it's id
+//
+let getEntityById = function(id) {
+    return query(`g.v(id)`, { id: id });
+}
+
+
 //
 // Get all Entities linked with given id via an inEdge with a specific label
 //
@@ -244,6 +253,7 @@ exports.createEntityLinkedFrom = createEntityLinkedFrom
 
 // Getters
 exports.getEntities = getEntities
+exports.getEntityById = getEntityById
 exports.getEntitiesIn = getEntitiesIn
 exports.getEntitiesOut = getEntitiesOut
 exports.getLinksByLabel = getLinksByLabel

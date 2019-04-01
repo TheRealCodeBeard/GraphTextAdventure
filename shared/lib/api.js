@@ -88,13 +88,13 @@ exports.put = function(service, uri, data) {
 _axiosCall = async function(method, service, uri, data = null) {
   try {
     let url = ""
-    switch(service.toUpperCase()) {
-      case 'BASE': url = `${process.env.API_BASE_HOST}/api/${uri}`; break;
-      case 'GOD': url = `${process.env.API_GOD_HOST}/api/${uri}`; break;
-      case 'NPC': url = `${process.env.API_NPC_HOST}/api/${uri}`; break;
-      case 'PLAYER': url = `${process.env.API_PLAYER_HOST}/api/${uri}`; break;
+    switch(service.toLowerCase()) {
+      case 'base': url = `${process.env.API_BASE_HOST}/api/${uri}`; break;
+      case 'god': url = `${process.env.API_GOD_HOST}/api/${uri}`; break;
+      case 'agent': url = `${process.env.API_AGENT_HOST}/api/${uri}`; break;
+      // case 'PLAYER': url = `${process.env.API_PLAYER_HOST}/api/${uri}`; break;
     }    
-    if(!url) throw new Error('Invalid API service requested must be one of: BASE, GOD, NPC, PLAYER')
+    if(!url) throw new Error('Invalid API service requested must be one of: base, god, or agent')
 
     let req = { 
       method: method, 

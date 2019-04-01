@@ -4,21 +4,27 @@ require('dotenv').config({ path: '.env' })
     
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 require('./consts')
 
 // ---- Common stuff most severs will do ----
 
 // Load config variables
 var PORT = process.env.PORT || 4000;
-var API_BASE_HOST = process.env.API_BASE_HOST || "http://localhost:3000";
+//var API_BASE_HOST = process.env.API_BASE_HOST || "http://localhost:3000";
 
 // Set up Express
 var app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 // Plug in API routes
-let mainRoutes = require('./api-routes/allroutes');
-app.use('/', mainRoutes);
+let npcRoutes = require('./api-routes/npc.js');
+let playerRoutes = require('./api-routes/player.js');
+let agentRoutes = require('./api-routes/agent.js');
+app.use('/', playerRoutes);
+app.use('/', npcRoutes);
+app.use('/', agentRoutes);
 
 // ---- Auto generated Swagger is optional but nice ----
 
@@ -55,8 +61,8 @@ app.use('/', mainRoutes);
 // Export the app so we can use it elsewhere
 exports.app = app;
 // Start the npcClockLoop 
-const clock = require('./lib/clock');
-setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
+const npcClock = require('./lib/npc-clock');
+//setTimeout(npcClock.npcClockLoop, CLOCK_MILLS_PER_TICK);
 
 // Load the NPC templates, make them globally accessible / cached
 let templateFile = require('path').join(__dirname, NPC_TEMPLATES);

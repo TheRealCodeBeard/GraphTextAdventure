@@ -24,7 +24,7 @@ body {
   z-index: 300;
 }
 
-.item span {
+.item-row span {
   font-size:12px;
   padding:10px;
   margin:1px;
@@ -71,4 +71,24 @@ main {
 }
 #debug {
   max-height: 450px;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.label-colour-player {
+  background-color: rgb(119, 216, 110) !important;
+}
+
+.label-colour-item {
+  background-color: rgb(61, 162, 221) !important;
+}
+
+.label-colour-room {
+  background-color: rgb(177, 157, 139) !important;
+}
+
+.label-colour-path {
+  background-color: rgb(209, 209, 209) !important;
 }

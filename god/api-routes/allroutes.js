@@ -127,6 +127,24 @@ router.get('/api/room/whereis/:id', async (req, res) => {
 });
 
 
+//
+// SPECIAL API 
+//
+router.get('/api/world/current', async (req, res) => {
+    try {
+        let nodeResults = await gremlin.query("g.V().map(values('id','label','description','name').fold())", {});
+        let edgeResults = await gremlin.query("g.E()", {});
+
+        res.status(200).send({
+            nodes: nodeResults,
+            edges: edgeResults
+        })
+    } catch(e) {
+        console.error(`### ERROR: ${e.toString()}`);
+        API.send500(res, e.toString())
+    }
+});
+
 // =================================================================
 
 function describeEntities(results, prefixText, nothingText, entities, filter) {
