@@ -29,5 +29,18 @@ content-type: application/json
   "value": {{$randomInt 2 8}}
 }
 
-### Move a NPC somewhere
-PUT http://localhost:4000/api/npcs/{{npcId}}/move/{{moveLocationId}}
+### Teleport a NPC somewhere
+POST http://localhost:4000/api/npcs/{{npcId}}/teleport
+content-type: application/json
+
+{
+  "location": "{{moveLocationId}}"
+}
+
+### Walk a NPC somewhere
+POST http://localhost:4000/api/npcs/60fe7b32-40bd-42e2-990c-4f166a6247d3/walk
+content-type: application/json
+
+{
+  "direction": "south"
+}

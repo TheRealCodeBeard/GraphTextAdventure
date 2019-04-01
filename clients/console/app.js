@@ -562,4 +562,4 @@ setInterval(() => {
         lastCheck = new Date().getTime();
     })
 
-}, 8000);
+}, 2000);

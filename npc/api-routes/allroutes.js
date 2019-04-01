@@ -2,30 +2,9 @@ var express = require('express')
 var router = express.Router()
 const NPC = require('../lib/npc')
 const API = require('../../shared/lib/api')
-
 const gremlin = require('../../shared/lib/gremlin-wrapper-v2')
 
-/**
- * @typedef ApiResp
- * @property {string} apiMsg.required - System message relating to API call
- * @property {string} gameMsg.required - Game message or text to display to player
- * @property {Array.<object>} entities - Array of game entities
- */
-/**
- * @typedef CreateNPCRequest
- * @property {string} type.required - Example: orc
- * @property {string} locationId.required - Location to spawn NPC in
- */
 
-/**
- * Create a new NPC in a given location
- * @route POST /npcs/create
- * @group NPCs - Operations on NPCs
- * @param {CreateNPCRequest.model} npc.body.required - The request to create NPC
- * @returns {ApiResp.model} 200 - An ApiResp object
- * @returns {Error} 404 - NPC type not found
- * @returns {Error} default - Unexpected error
- */
 router.post('/api/npcs/create', async function (req, res, next) {
   try {
     // Get input properties and validate
@@ -56,16 +35,6 @@ router.post('/api/npcs/create', async function (req, res, next) {
 })
 
 
-/**
- * Try to damage an NPC
- * @route POST /npcs/{id}/damage
- * @group NPCs - Operations on NPCs
- * @param {string} id.path.required - The id of the agent 
- * @param {Interaction.model} interaction.body.required - The interaction request
- * @returns {ApiResp.model} 200 - An ApiResp object
- * @returns {Error} 404 - NPC not found
- * @returns {Error} default - Unexpected error
- */
 router.post('/api/npcs/:id/damage', async function (req, res, next) {
   let value = req.body.value
   let msg = ""
@@ -89,22 +58,44 @@ router.post('/api/npcs/:id/damage', async function (req, res, next) {
 })
 
 
-/**
- * Move an NPC to a new location
- * @route PUT /npcs/{id}/move/{locationId}
- * @group NPCs - Operations on NPCs
- * @param {string} id.path.required - The id of the agent 
- * @param {string} locationId.path.required - The id of the location
- * @returns {ApiResp.model} 200 - An ApiResp object
- * @returns {Error} 404 - NPC not found
- * @returns {Error} default - Unexpected error
- */
-router.put('/api/npcs/:id/move/:locationId', async function (req, res, next) {
+router.post('/api/npcs/:id/teleport', async function (req, res, next) {
+  let location = req.body.location;
   try {
-    await gremlin.moveEntityOut(req.params.id, 'in', req.params.locationId)
-    API.postRoomMessage(req.params.locationId, `A NPC has wandered in`)
+    debug(`Teleporting NPC ${req.params.id}`)
+    if(!location) throw new Error(`locationId missing from body`)  
+      
+    await gremlin.moveEntityOut(req.params.id, 'in', location)
+    API.postRoomMessage(location, `A NPC has beamed in`)
 
-    API.sendOne(res, "success", "The NPC moves to another location", {})
+    API.sendOne(res, "success", "The NPC teleports to another location", {})
+  } catch(e) {
+    console.error(`### ERROR: ${e.toString()}`);
+    API.send500(res, e.toString())
+  }
+})
+
+
+router.post('/api/npcs/:id/walk', async function (req, res, next) {
+  let direction = req.body.direction.toLowerCase();
+  try {
+    if(!direction) throw new Error(`direction missing from body`)    
+    debug(`Walking NPC ${req.params.id} ${direction}`)
+
+    let npc = await API.get('god', `entities/any/${req.params.id}`) 
+
+    let whereRes = await API.get('god', `room/whereis/${req.params.id}`) 
+    
+    let matchDir = whereRes.entities.find(d => { return d.label == 'path' && d.name == direction}) 
+    if(matchDir) {    
+      await gremlin.moveEntityOut(req.params.id, 'in', matchDir.destinationId)
+      await API.postRoomMessage(matchDir.destinationId, `The ${npc.entities[0].name} has entered`)      
+      await API.postRoomMessage(matchDir.sourceId, `The ${npc.entities[0].name} has gone ${direction}`)      
+    } else {
+      API.sendOne(res, "success", "There is no way to go "+direction, {})
+      return;
+    }
+
+    API.sendOne(res, "success", `You successfully go ${direction}`, {})
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString())

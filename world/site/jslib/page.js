@@ -22,11 +22,6 @@ let graph_style = [
     }
 ];
 
-let graph_layout = {
-    name:'breadthfirst',
-    padding:120
-};
-
 let resplafunt = function(data){
     let the_data = [];
     data.nodes.forEach(element => {
@@ -35,7 +30,7 @@ let resplafunt = function(data){
                 id:element[0],
                 label:element[1],
                 description:element[2],
-                name:element[3],
+                name:element[3]
             }
         });
     });
@@ -44,7 +39,7 @@ let resplafunt = function(data){
         the_data.push({
             data:{
                 id:element.id,
-                label: (element.properties && element.properties.name) ? `${element.label}: ${element.properties.name}` : element.label,
+                label: (element.properties && element.properties.name) ? element.properties.name : element.label,
                 source:element.outV,
                 target:element.inV
             }
@@ -72,7 +67,7 @@ let set_player = function(guid){
 
 let load_players = function(){
     let ps = document.getElementById('player_list');
-    ps.innerHTML="Loading...";
+    //ps.innerHTML="Loading...";
     fetch(god_root+'/api/entities/player')
         .then(response=>response.json())
         .then(data=>{
@@ -127,41 +122,61 @@ let debug_entity = function(guid){
         })
 };
 
+// Global vars aren't always bad, ok?
+let cy = {}
 
+//
+// Starts here
+//
 let go = function(){
-    let lod = document.getElementById('loading');
-    lod.innerHTML="Loading";
+    cy = cytoscape({
+        container:document.getElementById("cy"),
+        style: graph_style
+    });
+
+    let style = cy.style()
+    style.selector('[label="room"]').style({ 'background-color': '#70594d' })
+    style.selector('[label="item"]').style({ 'background-color': '#37a6dd' })
+    style.selector('[label="player"]').style({ 'background-color': '#1fc14f' })
+    style.selector('[label="npc"]').style({ 'background-color':'#bc2b14'})
+    style.selector('[label="in"]').style({ 'line-color': '#8b27bc' })
+    style.selector('[label="holds"]').style({ 'line-color': '#1fc4c6' })
+    style.update()
+
+    // Click/select event
+    cy.on('click', evt => {
+        // Only work with nodes
+        if(evt.target.length > 0 && evt.target.isNode()) {
+            debug_entity(evt.target.data().id);
+        } else {
+            document.getElementById('debug').innerHTML = ''
+        }
+    })
+
+    dataRefresh();
+    setInterval(dataRefresh, 10 * 1000)
+}; 
+
+//
+// Update data displayed and re-layout
+//
+let dataRefresh = function() {
+    var loading = document.getElementById('loading')
+    loading.classList.add('is-visible');
     fetch('./api/current')
         .then(response=>response.json())
         .then(data=>{
-            let cy = cytoscape({
-                container:document.getElementById("cy"),
-                elements: resplafunt(data),
-                style: graph_style,
-                layout: graph_layout
-            });
-            cy.$('[label="room"]').style({ 'background-color': '#70594d' })
-            cy.$('[label="item"]').style({ 'background-color': '#37a6dd' })
-            cy.$('[label="player"]').style({ 'background-color': '#1fc14f' })
-            cy.$('[label="npc"]').style({ 'background-color':'#bc2b14'})
-            cy.$('[label="in"]').style({ 'line-color': '#8b27bc' })
-            cy.$('[label="holds"]').style({ 'line-color': '#1fc4c6' })
-
-            // Click/select event
-            cy.on('click', evt => {
-                // Only work with nodes
-                if(evt.target.length > 0 && evt.target.isNode()) {
-                    // if(evt.target.data().label === 'room')
-                    //     debug_entity(evt.target.data().id);
-                    // else
-                    debug_entity(evt.target.data().id);
-                } else {
-                    document.getElementById('debug').innerHTML = ''
-                }
-            })
+            cy.remove("*")
+            cy.add(resplafunt(data))
+            cy.layout({
+                name: 'breadthfirst', 
+                roots: cy.nodes(`[name="start"]`),
+                nodeDimensionsIncludeLabels: true,
+                spacingFactor: 1.3
+              }).run()
             cy.fit()
 
-            lod.innerHTML="";
+            loading.classList.remove('is-visible');
         })
         .then(load_players);
-}; 
+}

@@ -22,21 +22,21 @@ app.use('/', mainRoutes);
 
 // ---- Auto generated Swagger is optional but nice ----
 
-let swaggerOptions = {
-  swaggerDefinition: {
-    info: {
-      description: 'Graph Text Adventure - NPC API server',
-      title: 'Swagger',
-      version: require('./package.json').version
-    },
-    host: `localhost:${PORT}`,
-    basePath: '/api'
-  },
-  basedir: __dirname,
-  files: ['./api-routes/**/*.js']
-};
-const expressSwagger = require('express-swagger-generator')(app);
-expressSwagger(swaggerOptions);
+// let swaggerOptions = {
+//   swaggerDefinition: {
+//     info: {
+//       description: 'Graph Text Adventure - NPC API server',
+//       title: 'Swagger',
+//       version: require('./package.json').version
+//     },
+//     host: `localhost:${PORT}`,
+//     basePath: '/api'
+//   },
+//   basedir: __dirname,
+//   files: ['./api-routes/**/*.js']
+// };
+// const expressSwagger = require('express-swagger-generator')(app);
+// expressSwagger(swaggerOptions);
 
 // ---- get API metadata from base server - NOT USED FOR ANYTHING YET! ----
 
@@ -55,8 +55,8 @@ expressSwagger(swaggerOptions);
 // Export the app so we can use it elsewhere
 exports.app = app;
 // Start the npcClockLoop 
-//const clock = require('./lib/clock');
-//setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
+const clock = require('./lib/clock');
+setTimeout(clock.npcClockLoop, CLOCK_MILLS_PER_TICK);
 
 // Load the NPC templates, make them globally accessible / cached
 let templateFile = require('path').join(__dirname, NPC_TEMPLATES);

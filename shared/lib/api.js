@@ -76,6 +76,13 @@ exports.post = function(service, uri, data) {
 }
 
 //
+// Generic PUT wrapper
+//
+exports.put = function(service, uri, data) {
+  return _axiosCall('put', service, uri, data)
+}
+
+//
 // Private API call wrapper for Axios
 //
 _axiosCall = async function(method, service, uri, data = null) {

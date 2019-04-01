@@ -35,7 +35,7 @@ router.get('/api/room/:id/look', async (req, res) => {
         // Paths are described by their names, not labels
         desc += results.map(d => d.properties.name).join(", ");
         // We fake the exits into pseudo entities even though they do not have names or descriptions (yet)
-        results.map(d => entities.push({ id: d.id, label: d.label, name: "exit", description: d.label }));
+        results.map(edge => entities.push(makeEntityFromPath(edge)));
 
         // Send it back
         API.sendArray(res, "success", desc, entities);
@@ -107,6 +107,26 @@ router.post('/api/room/:id/message', async (req, res) => {
     }
 });
 
+//
+// Locate the room a player/NPC is in
+//
+router.get('/api/room/whereis/:id', async (req, res) => {
+    try {
+        entities = []
+        let roomRes = await gremlin.getEntitiesOut(req.params.id, 'in'); 
+        entities.push(gremlin.rehydrateEntity(roomRes[0], Room))
+        let exitsRes = await gremlin.query("g.v(id).outE().where(inV().hasLabel('room'))", {id: roomRes[0].id});
+        
+        // We fake the exits into pseudo entities even though they do not have names or descriptions (yet)
+        exitsRes.map(edge => entities.push(makeEntityFromPath(edge)));
+        API.sendArray(res, "success", "", entities);
+    } catch(e) {
+        console.error(`### ERROR: ${e.toString()}`);
+        API.send500(res, e.toString())
+    }
+});
+
+
 // =================================================================
 
 function describeEntities(results, prefixText, nothingText, entities, filter) {
@@ -125,4 +145,14 @@ function describeEntities(results, prefixText, nothingText, entities, filter) {
     return desc
 }
 
+function makeEntityFromPath(edge) {
+    return {
+        id: edge.id,
+        label: edge.label,
+        name: edge.properties.name,
+        description: edge.label,
+        destinationId: edge.inV,
+        sourceId: edge.outV
+    }
+}
 module.exports = router;

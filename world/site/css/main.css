@@ -10,9 +10,18 @@ body {
   background-color: white;
 }
 
+.toggle-content {
+	visibility: hidden;
+}
+
+.toggle-content.is-visible {
+	visibility: visible;
+}
 
 #loading {
-  font-size: 12px;
+  font-size: 40px;
+  position: absolute;
+  z-index: 300;
 }
 
 .item span {
