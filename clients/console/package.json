@@ -4,7 +4,8 @@
   "description": "Console client for GTA",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js ../../.env"
+    "start": "node app.js ../../.env",
+    "addplayer": "node app.js addplayer"
   },
   "repository": {
     "type": "git",

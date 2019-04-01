@@ -14,7 +14,13 @@ router.post('/api/npcs/create', async function (req, res, next) {
     if(!locationId) throw new Error(`locationId missing`);
 
     // Create a new NPC - it will have no id yet
-    let npc = new NPC(type)
+    let npc;
+    try {
+      npc = new NPC(type)
+    } catch(e) {
+      API.send400(res, e.toString())
+      return;
+    }
     
     // Store in graph
     let gremlinRes = await gremlin.createEntityLinkedTo(npc, 'in', locationId)
@@ -24,10 +30,11 @@ router.post('/api/npcs/create', async function (req, res, next) {
     npc.id = gremlinRes[0].id
 
     debug(`Created NPC ${gremlinRes[0].id} in location ${locationId}`)
-    API.postRoomMessage(locationId, `${npc.description} has spawned here!`)
+    let msg = `A ${npc.npcDesc} ${npc.name} spawns here!`
+    API.postRoomMessage(locationId, msg)
 
     // Send back the NPC in an API payload with a message
-    API.sendOne(res, "success", `A ${npc.npcDesc} ${npc.name} spawns`, npc)
+    API.sendOne(res, "success", msg, npc)
   } catch(e) {
     console.error(`### ERROR: ${e.toString()}`);
     API.send500(res, e.toString());

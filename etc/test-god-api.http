@@ -1,25 +1,48 @@
 @roomID = 43cf4d0c-777a-4ab3-b0d7-c44808384585
 
 ###
-GET http://localhost:7000/api/room/{{roomID}}/look?filter=
+GET http://localhost:5000/api/room/{{roomID}}/look?filter=
 
 
 ###
-GET http://localhost:7000/api/entities/any/{{roomID}}
+GET http://localhost:5000/api/entities/any/{{roomID}}
 
 
 ###
-GET http://localhost:7000/api/entities/room
+GET http://localhost:5000/api/entities/npc
 
 
 ###
-GET http://localhost:7000/api/entities/room/{{roomID}}
+GET http://localhost:5000/api/entities/room/{{roomID}}
+
+###
+GET http://localhost:5000/api/room/whereis/7cb594cf-c579-4da4-939d-307d047d9f3b
 
 
 ###
-POST http://localhost:7000/api/room/{{roomID}}/message
+POST http://localhost:5000/api/room/{{roomID}}/message
 content-type: application/json
 
 {
   "message": "A mysterous voice booms out"
 }
+
+###
+POST http://localhost:5000/api/items/aa17155d-3a5a-4730-9f6b-9d368fe37601/moveto
+content-type: application/json
+
+{
+  "holderId": "18ae2215-b2ef-4300-b8a8-90d92bc19ebd"
+}
+
+###
+POST http://localhost:5000/api/room/2b9f77f4-2352-451d-9d79-b7e227fcafafZZZZZZZ/create
+content-type: application/json
+
+{
+  "name": "cave",
+  "description": "A room",
+  "direction": "east"
+}
+
+###

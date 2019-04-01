@@ -69,7 +69,6 @@ let set_player = function(guid){
 
 let load_players = function(){
     let ps = document.getElementById('player_list');
-    //ps.innerHTML="Loading...";
     fetch(god_root+'/api/entities/player')
         .then(response=>response.json())
         .then(data=>{
@@ -79,7 +78,7 @@ let load_players = function(){
 
 let load_player_items = function(guid){
     let it = document.getElementById('player_items');
-    fetch(agent_root+`/api/agent/${guid}/items`)
+    fetch(agent_root+`/api/agents/${guid}/items`)
     .then(resp => resp.json())
     .then(data => {
         it.innerHTML = data.entities.map(thing_to_html).join("")
@@ -99,34 +98,10 @@ let load_player_room = function(guid){
         fetch(god_root+`/api/room/${roomId}/look`)
         .then(resp => resp.json())
         .then(data => {
-            if(data.entities.length > 0) rit.innerHTML = data.entities.map(thing_to_html).join("<br/>")
+            if(data.entities.length > 0) rit.innerHTML = data.entities.map(thing_to_html).join("")
         })
     })
-
-    // fetch('./api/players/'+guid+"/room")
-    //     .then(response=>response.json())
-    //     .then(data=>{
-    //         let room = data[0];//assumptions, player can be in one room only
-    //         r.innerHTML = room.description + " (" + room.id + ")";
-    //         return room.id;
-    //     })
-    //     .then(id=>{
-    //         return fetch('./api/items/room/'+id)
-    //         .then(response=>response.json())
-    //         .then(data=>{
-    //             if(data.length>0) rit.innerHTML = data.map(item_to_html)
-    //             else rit.innerHTML = "Nothing"
-    //         })
-    //     });
 };
-
-// let debug_room = function(guid){
-//     fetch(`${god_root}/api/room/${guid}/look`)
-//         .then(response=>response.json())
-//         .then(data=>{
-//             document.getElementById('debug').innerHTML = `Room: ${guid}\n\n${data.gameMsg}`
-//         })
-// };
 
 let debug_entity = function(guid){
     fetch(`${god_root}/api/entities/any/${guid}`)

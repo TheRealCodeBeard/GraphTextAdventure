@@ -1,4 +1,4 @@
-@locationId = 0226d0df-c70d-465e-8543-efc180b877cf
+@locationId = 4ed8929b-ccb7-46b6-b7e4-e9ae04887c91
 @moveLocationId = 43cf4d0c-777a-4ab3-b0d7-c44808384585
 
 ### Create a NPC 
@@ -16,10 +16,10 @@ content-type: application/json
 
 
 ### Get NPC  
-GET http://localhost:7000/api/entities/npc/{{npcId}}
+GET http://localhost:5000/api/entities/npc/{{npcId}}
 
 ### Get ALL NPCs
-GET http://localhost:7000/api/entities/npc
+GET http://localhost:5000/api/entities/npc
 
 ### Damage an NPC
 POST http://localhost:4000/api/npcs/{{npcId}}/damage
@@ -43,4 +43,12 @@ content-type: application/json
 
 {
   "direction": "south"
+}
+
+### Create player
+POST http://localhost:4000/api/players/create
+content-type: application/json
+
+{
+
 }

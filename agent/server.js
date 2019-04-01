@@ -5,6 +5,7 @@ require('dotenv').config({ path: '.env' })
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+var morgan = require('morgan')
 require('./consts')
 
 // ---- Common stuff most severs will do ----
@@ -17,6 +18,7 @@ var PORT = process.env.PORT || 4000;
 var app = express();
 app.use(bodyParser.json());
 app.use(cors());
+app.use(morgan('dev'))
 
 // Plug in API routes
 let npcRoutes = require('./api-routes/npc.js');

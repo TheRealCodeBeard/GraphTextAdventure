@@ -110,6 +110,14 @@ _axiosCall = async function(method, service, uri, data = null) {
 
     return resp.data
   } catch(e) {
-    console.error(`### API Error! [${method}, ${service}, ${uri}] failed: ${e.toString()}`)
+    if(e.response && e.response.status == 400) 
+      if(e.response.data && e.response.data.apiMsg)
+        throw e.response.data.apiMsg
+      else  
+        throw new Error('API error status 400, request was invalid')
+
+    else
+      console.error(`### API Error! [${method}, ${service}, ${uri}] failed: ${e.toString()}`)
+    //console.log(e.response.data, { depth: null })
   }
 }

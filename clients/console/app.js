@@ -16,13 +16,9 @@ else
 
 const readline = require('readline');
 const colors = require('colors');
-const gremlin = require('../../shared/lib/gremlin-wrapper-v2');
 
 const API = require('../../shared/lib/api')
-
-const Player = require('../../shared/lib/player')
-const Room = require('../../shared/lib/room')
-const Item = require('../../shared/lib/item')
+const RPG = require('../../shared/lib/rpg')
 
 //Write to the console in the debug colour.
 let debug = function(text){ console.log(text.grey); };
@@ -59,14 +55,14 @@ debug("[User connection established]");
 let world = {
     playerNodeID:null,
     playerCurrentRoomID:null,
-    possibleDirections:{
-        "north":"south",
-        "east":"west",
-        "south":"north",
-        "west":"east",
-        "up": "down",
-        "down": "up"
-    }
+    // possibleDirections:{
+    //     "north":"south",
+    //     "east":"west",
+    //     "south":"north",
+    //     "west":"east",
+    //     "up": "down",
+    //     "down": "up"
+    // }
 };
 
 /* 
@@ -76,34 +72,20 @@ let world = {
 let make_room = async function(words,next){
     let direction = words[3];
 
-    if(world.possibleDirections[direction]){
-        info("Checking...");
-        let exitsRes = await gremlin.getLinksByLabel(world.playerCurrentRoomID, 'path');
-
-        if(exitsRes.some(r => r.properties.name === direction)){
-            info(`There is already a room to the ${direction.white}.`);
-            info("Try and make a room in an unused direction. use [look] to see which directions have been used.");
-            next();
-        } else {
-            info(`OK. Building room to the ${direction.white}...`);
-            let opposite = world.possibleDirections[direction];
-            debug(`Return door to: ${opposite}.`);
-
-            let rnd = Math.floor(Math.random() * Math.floor(10000));
-            let newRoom = new Room(`room ${rnd}`, 'An empty room');
-            // Create a new room and link it with a link of type 'path' and name = direction
-            let result = await gremlin.createEntityLinkedTo(newRoom, 'path', world.playerCurrentRoomID, opposite)
-            newRoom.id = result[0].id;
-            // Create a link of type 'path' and name = direction back to the room
-            await gremlin.createLinkTo(world.playerCurrentRoomID, 'path', newRoom.id, direction)
-            next();
+    try {
+        debug(`Making a(n) new room to the ${direction}`);
+        let newRoomReq = {
+            "name": "room "+RPG.rand(1, 10000),
+            "description": "A plain room",
+            "direction": direction
         }
+        let resp = await API.post('god', `room/${world.playerCurrentRoomID}/create`, newRoomReq)
+        info(resp.gameMsg);
 
-    } else {
-        info(`You can't make a room to the ${direction.white}.`);
-        info(`Only 'north, south, east and west' are currently allowed.`);
-        next();
-    } 
+    } catch(e) {
+        error(`Failed to make room. ${e.apiMsg ? e.apiMsg : e.toString()}`);
+    }
+    next();
 };
 
 let make_item = async function(words,next){
@@ -111,10 +93,8 @@ let make_item = async function(words,next){
     try {
         let desc = words.slice(3).join(" ");
         debug(`Making a(n) '${itemName}': '${desc}'`);
-
-        let item = new Item(itemName, desc);
-        let result = await gremlin.createEntityLinkedFrom(item, 'holds', world.playerCurrentRoomID);
-        item.id = result[0].id;
+        let resp = await API.post('god', `items/heldby/${world.playerCurrentRoomID}`, {name: itemName, description: desc})
+        if(resp) info(resp.gameMsg);
     } catch(e) {
         error(`Failed to make item. ${e.toString()}`);
     }
@@ -124,8 +104,9 @@ let make_item = async function(words,next){
 let make_npc = async function(words, next){
     let type = words[2];
     try {
-        let resp = await API.post('npc', `npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
-        if(resp) info(`${resp.gameMsg} before your very eyes!`);
+        debug(`Spawning a(n) NPC '${type}'`);
+        let resp = await API.post('agent', `npcs/create`, {type: type, locationId: world.playerCurrentRoomID})
+        if(resp) info(resp.gameMsg);
     } catch(e) {
         error(`Failed to spawn NPC. ${e.toString()}`);
     }
@@ -160,11 +141,12 @@ let make = function(words,next){
 let add_description = async function(words,next) {
     try {
         let description = words.slice(1).join(" ");
-        let roomRes = await gremlin.getEntities('room', 'id', world.playerCurrentRoomID)
-        let room = gremlin.rehydrateEntity(roomRes[0], Room)
+        let roomRes = await API.get('god', `entities/room/${world.playerCurrentRoomID}`)    
+        let room = roomRes.entities[0]; 
         room.description = description
-        await gremlin.updateEntity(world.playerCurrentRoomID, room)
-        await look_api(next)
+        let resp = await API.put('god', `entities/${world.playerCurrentRoomID}`, room)
+        info(resp.gameMsg);        
+        await look(next)
     } catch(e) {
         error(`Failed to add description to room. ${e.toString()}`);
     }
@@ -175,54 +157,19 @@ let add_description = async function(words,next) {
    STANDARD ACTION FUNCTIONS
 */
 
-//This provides the description property of the first rooms in the array given.
-//Should turn this into a generic 'describer' that takes in any kind of object array and collates whole description
-let describe = function(rooms){
-    if(rooms.length===1){
-        let room = rooms[0];
-        if(room.properties){
-            if(room.properties.description && room.properties.description.length>0){
-                //The properties description appears to be an array by default so mapping here. 
-                //Have only ever seen one.
-                desc(room.properties.description.map(d=>d.value).join());
-                return;
-            }
-        }
-    } else {//see comment about making this a generic describer
-        console.log("You can't describe multiple rooms at once");
-    }
-    console.log("The void looks back into you");
-};
-
-//This described items.
-let describe_items = function(items){
-    if(items.length){
-        items.forEach(item=>{
-            if(item.properties){
-                //this line makes a massive assumption the item was set up right.
-                //Yes, it could be refactored. But I am not going to right now because it works.  
-                desc(`  ${item.properties.name[0].value.white}: ${item.properties.description[0].value.grey}`)
-            } else {
-                desc(`This item has no name and is indescribable!`);
-            }
-        });
-    }
-};
-
-let inventory_api = async function(next){
+let inventory = async function(next){
     try {
-        let items = await API.get('base', `items/player/${world.playerNodeID}`)
+        let items = await API.get('agent', `agents/${world.playerNodeID}/items`)
         desc(`You have ${items.length} item(s)`);
-        items.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
+        items.entities.forEach(item=>desc(`  ${item.name.white}: ${item.description.grey}`));
     } catch(e) {
         error("Error calling API for look "+e.toString())        
     }
     next();    
 };
 
-let look_api = async function(next){
+let look = async function(next){
     try {
-        //let lookResult = await call_api(`${process.env.API_GOD_HOST}/api/room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
         let lookResult = await API.get('god', `room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
         desc(lookResult.gameMsg);
     } catch(e) {
@@ -236,57 +183,40 @@ let take = async function(words, next){
     let desired = words[1];
     debug(`you want the '${desired}'`);
 
-    // Check item is here! - EDGE CASE NOT HANDLED: Multiple items with same name!
-    let itemsHereRes = await gremlin.getEntitiesOut(world.playerCurrentRoomID, 'holds')
-    let item
-    for(let itemRes of itemsHereRes) {
-        item = gremlin.rehydrateEntity(itemRes, Item)
-        if(item.name === desired) break
-    }
-
-    if(item) {
-        info(`You reach out and grab the '${desired}'...`);
-        try {
-            // Taking items is the same as moving, the in/out direction on the edge is reversed
-            await gremlin.moveEntityIn(item.id, 'holds', world.playerNodeID);
-            info(`The ${desired} is now yours!`);
-        } catch(e) {
-            info(`You fail to pick up the ${desired}`);
-        }
-        next();        
-        return;
-    }
+    let lookResult = await API.get('god', `room/${world.playerCurrentRoomID}/look?filter=${world.playerNodeID}`)
+    let item = lookResult.entities.find(e => (e.label === 'item' && e.name === desired))
     
-    info(`There there is no '${desired}' here!`);
+    if(!item) {
+        info(`There there is no '${desired}' here!`);
+        next();
+    }
+    try {
+        let moveResult = await API.post('god', `items/${item.id}/moveto`, {holderId: world.playerNodeID})
+        info(`The ${desired} is now yours!`);
+    } catch(e) {
+        error(`You fail to pick up the ${desired}`);
+    }
     next();
 };
 
 let drop = async function(words, next){
     let desired = words[1];
-    debug(`you want to drop the '${desired}'`);
+    debug(`you want the '${desired}'`);
 
-    // Check item is in inventory - EDGE CASE NOT HANDLED: Multiple items with same name!
-    let itemsHereRes = await gremlin.getEntitiesOut(world.playerNodeID, 'holds')
-    let item
-    for(let itemRes of itemsHereRes) {
-        item = gremlin.rehydrateEntity(itemRes, Item)
-        if(item.name === desired) break
-    }
-
-    if(item) {
-        info(`You reach out and try to drop the '${desired}'...`);
-        try {
-            // Taking items is the same as moving, the in/out direction on the edge is reversed
-            await gremlin.moveEntityIn(item.id, 'holds', world.playerCurrentRoomID);
-            info(`The ${desired} drops to the floor!`);
-        } catch(e) {
-            info(`You fail to drop the ${desired}`);
+    try {
+        let itemsResult = await API.get('agent', `agents/${world.playerNodeID}/items`)
+        let item = itemsResult.entities.find(e =>  e.name === desired)
+        
+        if(!item) {
+            info(`You are not carrying a ${desired}`);
+            next();
         }
-        next();        
-        return;
+
+        let moveResult = await API.post('god', `items/${item.id}/moveto`, {holderId: world.playerCurrentRoomID})
+        info(`You drop the ${desired} onto the ground`);
+    } catch(e) {
+        error(`You fail to pick up the ${desired}`);
     }
-    
-    info(`You are not carrying '${desired}'!`);
     next();
 };
 
@@ -305,18 +235,19 @@ let walk = async function(words,next){
     let direction = words[1];
     process.stdout.write(".".green);
 
-    // Get exits and see if user had picked one
-    let pathsRes = await gremlin.getLinksByLabel(world.playerCurrentRoomID, 'path');
-    let chosenRoom = pathsRes.filter(path => { return path.properties.name === direction });
-
-    if(chosenRoom.length === 1) {
-        world.playerCurrentRoomID = chosenRoom[0].inV;
-        await gremlin.moveEntityOut(world.playerNodeID, 'in', chosenRoom[0].inV);
-        game(" arrived!]");
-        await look_api(next)
-    } else {
-        game(`There is no exit to the '${direction.white}']`);
-        next();        
+    // Walk is now a API
+    try {
+        let walkRes = await API.post('agent', `agents/${world.playerNodeID}/walk`, {direction: direction});
+        // Should return new room if successful
+        if(walkRes.entities.length > 0) {
+            world.playerCurrentRoomID = walkRes.entities[0].id;
+            game(" arrived!]");
+            await look(next)            
+        } else {
+            game(walkRes.gameMsg);  
+        }
+    } catch(e) {
+        error("ERROR "+e.toString());
     }
     
     next();
@@ -335,11 +266,11 @@ let act = function(command, next){
     switch(words[0]) {
         case "l": 
         case "look": 
-            look_api(next);
+            look(next);
             break;
         case "i":
         case "inventory":
-            inventory_api(next);
+            inventory(next);
             break;
         case "make":
             make(words,next);
@@ -385,13 +316,19 @@ let act = function(command, next){
 
 // Creates a room if none exist
 let bootstrap = async function(next){
-    let room = new Room('start', 'The starting room');
-    let result = await gremlin.createEntity(room);
-    room.id = result[0].id;
-    info(`In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move`);
-    info(`\nThe universe now contains one room: '${room.id}'\n`);
-    info(`After this add players by running: app.js addPlayer {roomId} {name} "{description}"`);
-    info(`Exiting, bye!`);
+    try {
+        let result = await API.post('god', `room`, {
+            name: 'start',
+            description: 'The starting room',
+        })
+        room = result.entities[0];
+        info(`In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move`);
+        info(`\nThe universe now contains one room: '${room.id}'\n`);
+        info(`After this add players by with: npm run addplayer ${room.id} {name} "{description}"`);
+        info(`Exiting, bye!`);
+    } catch(e) {
+        error(`Unable to create starting room ${e.toString}`);
+    }
     process.exit(0)
 };
 
@@ -399,19 +336,20 @@ let bootstrap = async function(next){
 let setup_player = async function() {
     process.stdout.write("\t[Player ... ".grey);
 
-    let results = await gremlin.getEntities('player', 'id', process.env.LOCAL_PLAYER_ID);
-
-    if(results.length === 1) {
-        world.playerNodeID = results[0].id;
-        world.playerName = results[0].properties.name[0].value;
-        debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
-        return true;
-    } else if (results.length===0){
+    try {
+        let results = await API.get('god', `entities/player/${process.env.LOCAL_PLAYER_ID}`)
+        if(results.entities.length === 1) {
+            world.playerNodeID = results.entities[0].id;
+            world.playerName = results.entities[0].name;
+            debug(`Player ID: ${world.playerNodeID}. Player Name: ${world.playerName}]`);
+            return true;
+        } else {
+            error("\t[Too many player nodes with id");
+            return false;
+        }
+    } catch(e) {
         error('\nPlayer not found, check env and LOCAL_PLAYER_ID is set correctly');
-        error('Or to create new player run: app.js addPlayer {roomId} {name} "{description}"');
-        return false;
-    } else {
-        error("\t[Too many player nodes with id");
+        error('Or to create new player with: npm run addplayer {roomId} {name} "{description}"');
         return false;
     }
 };
@@ -419,21 +357,22 @@ let setup_player = async function() {
 //Collect the current room ID from the user in the graph
 let setup_room = async function(){
     process.stdout.write("\t[Room   ... ".grey);
-    let results = await gremlin.getEntitiesOut(world.playerNodeID, 'in')
-    if(results.length === 1) {
-        world.playerCurrentRoomID = results[0].id;
+    
+    let results = await API.get('god', `room/whereis/${process.env.LOCAL_PLAYER_ID}`)
+    if(results.entities.length > 0) {
+        world.playerCurrentRoomID = results.entities[0].id;
         debug(`Player Room ID: ${world.playerCurrentRoomID}]`);
         return true
     } else {
-        error("\t[Player can only be in one room]");
+        error("\t[Player is not in a room! That's really bad]");
         return false
     }
 };
 
 // Check we have at least one room
 let setup_world = async function() {
-    let rooms = await gremlin.getEntities('room', 'label', 'room')
-    if(rooms.length < 1) {
+    let results = await API.get('god', `entities/room`)
+    if(results.entities.length < 1) {
         // No rooms! Trigger bootstrap and exit
         await bootstrap();
         return false
@@ -442,22 +381,25 @@ let setup_world = async function() {
 }
 
 let create_player = async function(roomId, name, description) {
-    let roomRes = await gremlin.getEntities('room', 'id', roomId)
-    if(roomRes.length != 1) { 
-        throw new Error(`Room '${roomId}' does not exist, can not create player!`)
-    }
-
-    let player = new Player(name, description);
-    let result
     try {
-        result = await gremlin.createEntityLinkedTo(player, 'in', roomId);
+        let roomRes = await API.get('god', `entities/room/${roomId}`)
+        if(roomRes.entities.length != 1) { 
+            throw new Error(`Room '${roomId}' does not exist, can not create player!`)
+        }
+        let playerRes = await API.post('agent', `players/create`, {
+            name: name,
+            description: description,
+            startRoomId: roomId
+        })
+        debug(playerRes.gameMsg);
+        debug(JSON.stringify(playerRes.entities[0], null, 3));
+        
+        return playerRes.entities[0]
     } catch(e) {
-        console.error(e);
-        return null
+        error(`Unable to create player ${e.toString}`);
     }
 
-    player.id = result[0].id;
-    return player
+    return null
 }
 
 //This is the main game setup. 
@@ -501,7 +443,7 @@ let setup = async function(next) {
     }      
     
     // Look at startup
-    await look_api(next)
+    await look(next)
 
     // chaining stuff
     next()
@@ -546,19 +488,26 @@ let kill = function(){
 setup(()=>{interactive(kill);});
 
 
-// Janky message comms test, looping polling thing
-// Not using API to keep overhead low - for now
+// =========================================================
+// Janky message looping polling thing which seems to work
+// =========================================================
 var lastCheck = new Date().getTime()
 setInterval(() => {
-    gremlin.getEntities('room', 'id', world.playerCurrentRoomID)
-    .then(roomRes => {
-        let room = gremlin.rehydrateEntity(roomRes[0], Room);
-        for(let msg of room.messages) {
-            if(msg.text.startsWith(`${world.playerName} says:`)) continue;
-            if(msg.timestamp > lastCheck)
-                post("\n" + msg.text); 
-        }
-        lastCheck = new Date().getTime();
-    })
-
-}, 2000);
+    try {
+        API.get('god', `room/whereis/${world.playerNodeID}`)
+        .then(results => {
+            for(let msg of results.entities[0].messages) {
+                if(msg.text.startsWith(`${world.playerName} says:`)) continue;
+                if(msg.text === `The ${world.playerName} has entered`) continue;
+                if(msg.timestamp > lastCheck)
+                    post("\n" + msg.text); 
+            }
+            lastCheck = new Date().getTime();
+        })
+        .catch(err => { 
+            console.log(err)
+        })
+    } catch(e) {
+        // nothing
+    }
+}, 5000);

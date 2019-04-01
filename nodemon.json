@@ -10,6 +10,7 @@
     "shared/",
     "agent/",
     "god/",
+    "world/",
     ".env"
   ],
   "ext": "js json .env"
