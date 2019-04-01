@@ -1,0 +1,31 @@
+@agentId = 7cb594cf-c579-4da4-939d-307d047d9f3b
+@itemId = d9887192-a050-42e6-8206-2357f0e04eb5
+@roomId = 4ed8929b-ccb7-46b6-b7e4-e9ae04887c91
+
+### Get a single item
+GET http://localhost:5000/api/entities/item/{{itemId}}
+
+
+### Get ALL items
+GET http://localhost:5000/api/entities/item/
+
+
+### Pick up or drop an item
+POST http://localhost:5000/api/items/{{itemId}}/moveto
+content-type: application/json
+
+{
+  //"holderId": "{{agentId}}"
+  "holderId": "{{roomId}}"
+}
+
+
+### Create item in room
+POST http://localhost:5000/api/items/heldby/{{roomId}}
+content-type: application/json
+
+{
+  //"holderId": "{{agentId}}"
+  "name": "sword",
+  "description": "very rusty and blunt"
+}

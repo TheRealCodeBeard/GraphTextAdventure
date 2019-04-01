@@ -1,0 +1,36 @@
+@roomID = 4ed8929b-ccb7-46b6-b7e4-e9ae04887c91
+@agentId = 7cb594cf-c579-4da4-939d-307d047d9f3b
+
+### Get a single room
+GET http://localhost:5000/api/entities/room/{{roomID}}
+
+
+### Get ALL rooms
+GET http://localhost:5000/api/entities/room/
+
+
+### Look at a room
+GET http://localhost:5000/api/room/{{roomID}}/look?filter=
+
+
+### Get room and exits for an agent
+GET http://localhost:5000/api/room/whereis/{{agentId}}
+
+
+### Send a message to a room
+POST http://localhost:5000/api/room/{{roomID}}/message
+content-type: application/json
+
+{
+  "message": "A mysterous voice booms out"
+}
+
+### Create linked room
+POST http://localhost:5000/api/room/{{roomID}}/create
+content-type: application/json
+
+{
+  "name": "cave",
+  "description": "A spooky cave filled with bats",
+  "direction": "east"
+}

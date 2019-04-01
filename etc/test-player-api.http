@@ -1,0 +1,19 @@
+@playerId = 7cb594cf-c579-4da4-939d-307d047d9f3b
+@startRoomId = a2fda072-e468-432e-8e52-af37c66c2311
+### Get a single player
+GET http://localhost:5000/api/entities/player/{{playerId}}
+
+
+### Get ALL players
+GET http://localhost:5000/api/entities/player
+
+
+### Create a new player
+POST http://localhost:4000/api/players/create
+content-type: application/json
+
+{
+  "name": "Fred",
+  "description": "A hairy git",
+  "startRoomId": "{{startRoomId}}"
+}

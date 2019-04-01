@@ -1,6 +1,6 @@
 /*
     This is a console text adventure using Cosmos DB Graph through Gremlin as full state back end.
-    This code is presented 'as is' with no licence or warrenty of any kind - purely for demonstration purposes. 
+    This code is presented 'as is' with no licence or warranty of any kind - purely for demonstration purposes. 
     Use at your own risk.
 
     Early Cosmos DB Graph code build from reading: https://github.com/Azure-Samples/azure-cosmos-db-graph-nodejs-getting-started

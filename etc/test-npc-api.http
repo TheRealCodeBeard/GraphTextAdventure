@@ -1,5 +1,5 @@
 @locationId = 4ed8929b-ccb7-46b6-b7e4-e9ae04887c91
-@moveLocationId = 43cf4d0c-777a-4ab3-b0d7-c44808384585
+
 
 ### Create a NPC 
 # @name create
@@ -29,26 +29,3 @@ content-type: application/json
   "value": {{$randomInt 2 8}}
 }
 
-### Teleport a NPC somewhere
-POST http://localhost:4000/api/npcs/{{npcId}}/teleport
-content-type: application/json
-
-{
-  "location": "{{moveLocationId}}"
-}
-
-### Walk a NPC somewhere
-POST http://localhost:4000/api/npcs/60fe7b32-40bd-42e2-990c-4f166a6247d3/walk
-content-type: application/json
-
-{
-  "direction": "south"
-}
-
-### Create player
-POST http://localhost:4000/api/players/create
-content-type: application/json
-
-{
-
-}

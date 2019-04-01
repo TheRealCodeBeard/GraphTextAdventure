@@ -97,3 +97,11 @@ main {
 .label-colour-npc {
   background-color: rgb(221, 85, 85) !important;
 }
+
+#player_room_pre {
+  background-color: #111;
+  color: rgb(116, 204, 245);
+  font-family: 'Courier New', Courier, monospace;
+  padding: 10px;
+  font-size: 15px
+}

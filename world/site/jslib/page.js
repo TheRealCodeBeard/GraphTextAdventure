@@ -85,8 +85,9 @@ let load_player_items = function(guid){
     })
 };
 
+
 let load_player_room = function(guid){
-    let r = document.getElementById('player_room');
+    let r = document.getElementById('player_room_pre');
     let rit = document.getElementById('room_items');
     fetch(god_root+`/api/room/whereis/${guid}`)
     .then(resp => resp.json())
@@ -95,9 +96,10 @@ let load_player_room = function(guid){
         return  data.entities[0].id;
     })
     .then(roomId => {
-        fetch(god_root+`/api/room/${roomId}/look`)
+        fetch(god_root+`/api/room/${roomId}/look?filter=${guid}`)
         .then(resp => resp.json())
         .then(data => {
+            r.innerHTML = data.gameMsg.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')
             if(data.entities.length > 0) rit.innerHTML = data.entities.map(thing_to_html).join("")
         })
     })

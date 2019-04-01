@@ -1,0 +1,19 @@
+@moveLocationId = 14f0dab7-2733-42b1-b997-739b284d3498
+@agentId = 2a1a7f9f-4f51-4bdc-b6f9-b7b3095c45ae
+
+### Teleport an agent somewhere
+POST http://localhost:4000/api/agents/{{agentId}}/teleport
+content-type: application/json
+
+{
+  "location": "{{moveLocationId}}"
+}
+
+### Walk an agent somewhere
+POST http://localhost:4000/api/agents/{{agentId}}/walk
+content-type: application/json
+
+{
+  "direction": "east"
+}
+
